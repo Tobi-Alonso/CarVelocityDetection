@@ -13,7 +13,7 @@ using namespace std;
 
 int main(int, char**)
 {
-	 VideoCapture cap("/home/tobi/Documentos/Facu/vision/fuentes-proyecto/vid1.mp4"); // open the default camera
+	 VideoCapture cap("/home/tobi/Documentos/Facu/vision/ProyectoFinal/fuentes-proyecto/vid1.mp4"); // open the default camera
 	//VideoCapture cap(0);
 		if(!cap.isOpened())  // check if we succeeded
 		        return -1;
@@ -28,7 +28,7 @@ int main(int, char**)
     	const int HTthreshold=400;
     	const unsigned char Sobelthreshold=120;    //poner int, mas eficiente
         const float HeightCamera=1.6;
-        const int fCamara=1690;     //focal dist. in pixels
+        const int fCamara=1680;     //focal dist. in pixels , need to calculate correctly
         const int FPS_DIV=2;
         const float DeltaTime=FPS_DIV/cap.get(CV_CAP_PROP_FPS);
 
@@ -85,6 +85,23 @@ int main(int, char**)
 			case 's':
 				waitKey();
 				break;
+			case 'f':
+				int video_speed;
+				cout<<"\n Introduce video speed"<<endl;
+				cin>>video_speed;
+				for(;;){
+					for (int i = 0; i <video_speed-1; ++i){
+					            cap.grab();
+					        }
+					cap >> frame; // get a new frame from camera
+					imshow("video",frame);
+					if(waitKey(1) >= 0) break;
+				}
+				//do what needs to be done before coming back
+					cvtColor(frame,gray_frame,CV_BGR2GRAY);
+					equalizeHist(gray_frame,gray_frame);
+				break;
+
 
         }
 

@@ -7,7 +7,7 @@
 
 #include "Calcspeed.h"
 
-static void CalcVelocity(vector<Point2f>& prevPts,vector<Point2f>& nextPts,vector<uchar>& features_found,vector<float>& feature_errors,
+static void CalcSpeed(vector<Point2f>& prevPts,vector<Point2f>& nextPts,vector<uchar>& features_found,vector<float>& feature_errors,
 		vector<float>& Vel, Vec2f leftEdge,Vec2f rightEdge,float yFloor,int fCamara,float DeltaTime,int rows,int cols){
 	CV_Assert(Vel.empty());
     int a0left=leftEdge[0] +rows/2-leftEdge[1]*cols/2;
@@ -19,14 +19,14 @@ static void CalcVelocity(vector<Point2f>& prevPts,vector<Point2f>& nextPts,vecto
 			int x=prevPts[i].x;
 			if (x <cols/2) {  //left side
 				if (prevPts[i].y<leftEdge[1]*x + a0left ){//on the wall
-					Vel.push_back(yFloor*fCamara*(1/(leftEdge[0]+nextPts[i].x*leftEdge[1])-1/(leftEdge[0]+x*leftEdge[1]))/DeltaTime);
+					Vel.push_back(yFloor*fCamara*(1/(leftEdge[0]+(nextPts[i].x-cols/2)*leftEdge[1])-1/(leftEdge[0]+(x-cols/2)*leftEdge[1]))/DeltaTime);
 				}else{
 					Vel.push_back(yFloor*fCamara*(1/nextPts[i].y-1/prevPts[i].y)/DeltaTime);
 				}
 
 			}else{//right side
 				if (prevPts[i].y<rightEdge[1]*x + a0right ){//on the wall
-					Vel.push_back(yFloor*fCamara*(1/(rightEdge[0]+nextPts[i].x*rightEdge[1])-1/(rightEdge[0]+x*rightEdge[1]))/DeltaTime);
+					Vel.push_back(yFloor*fCamara*(1/(rightEdge[0]+(nextPts[i].x-cols/2)*rightEdge[1])-1/(rightEdge[0]+x*rightEdge[1]))/DeltaTime);
 				}else{
 					Vel.push_back(yFloor*fCamara*(1/nextPts[i].y-1/prevPts[i].y)/DeltaTime);
 				}
@@ -70,6 +70,7 @@ float GetSpeed(Mat& frame,Mat& old_frame,Vec2f leftEdge,Vec2f rightEdge,float yF
 	//draw them
 		Mat aux;
 		frame.copyTo(aux);
+		cvtColor(aux,aux,CV_GRAY2BGR);
 		for( unsigned int i=0; i < features_found.size(); i++ ){
 						if(features_found[i]&&feature_errors[i]<10){
 							Point pi( ceil( PrevPts[i].x ), ceil( PrevPts[i].y ) );
@@ -82,10 +83,10 @@ float GetSpeed(Mat& frame,Mat& old_frame,Vec2f leftEdge,Vec2f rightEdge,float yF
 		imshow("video",aux);
 
 	//Calculate their velocity based on ours hypothesis
-		std::vector<float> Velocity;
-		Velocity.reserve(maxCorners);
+		std::vector<float> speed;
+		speed.reserve(maxCorners);
 
-		CalcVelocity(PrevPts,NextPts,features_found,feature_errors,Velocity,leftEdge,rightEdge,
+		CalcSpeed(PrevPts,NextPts,features_found,feature_errors,speed,leftEdge,rightEdge,
 				yFloor,fCamara,DeltaTime,
 				frame.rows,
 				frame.cols
@@ -93,12 +94,14 @@ float GetSpeed(Mat& frame,Mat& old_frame,Vec2f leftEdge,Vec2f rightEdge,float yF
 
 	
 	//Get the average Velocity
-		float Vel_acc=0;
-		for (unsigned int i = 0; i < Velocity.size(); ++i)
+		float speed_acc=0;
+		for (unsigned int i = 0; i < speed.size(); ++i)
 		{
-			Vel_acc+=Velocity[i];
+			speed_acc+=speed[i];
 		}
-		float Vel=Vel_acc/Velocity.size();
+		float av_speed=speed_acc/speed.size();
+
+		cout<<"vectores de velocidad: "<<speed.size()<<endl;
 
 	
 		
@@ -118,7 +121,7 @@ float GetSpeed(Mat& frame,Mat& old_frame,Vec2f leftEdge,Vec2f rightEdge,float yF
 	    }
 	}*/
 
-	return Vel;
+	return av_speed;
 };
 
 
