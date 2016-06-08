@@ -9,11 +9,14 @@
 
 
 // constructor por defecto
-Street_edge::Street_edge(void)
-{
+Street_edge::Street_edge(void):
+thresholdH(300),
+thresholdS(100),
+street_side(LEFT_SIDE)
+{/*
 	thresholdH=0;
 	thresholdS=0;
-	street_side = LEFT_SIDE;
+	street_side = LEFT_SIDE;*/
     sobel_kernel=(Mat_<char>(5,5)<< 0,-1,-1,-1,-1,
                                     1,0,-1,-1,-1,
                                     1,1,0,-1,-1,
@@ -26,11 +29,13 @@ Street_edge::Street_edge(void)
 // constructor general
 Street_edge::Street_edge(int TH, unsigned char TS, bool side):
 thresholdH(TH),
-thresholdS()
+thresholdS(TS),
+street_side(side)
 {
+		/*
 	thresholdH=TH;
 	thresholdS=TS;
-	street_side = side;
+	street_side = side;*/
     sobel_kernel=(Mat_<char>(5,5)<< 0,-1,-1,-1,-1,
                                     1,0,-1,-1,-1,
                                     1,1,0,-1,-1,

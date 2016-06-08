@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include "street_edge.h"
+#include "Calcspeed.h"
 
 using namespace cv;
 using namespace std;
@@ -20,7 +21,7 @@ using namespace std;
 	line(  frame, pt1, pt2, Scalar(0,0,255), 3, CV_AA);\
 }
 
-void CalcVelocity(vector<Vec2f>&,vector<Vec2f>&,vector<float>&,Vec2f,Vec2f,float,int);
+
 
 int main(int, char**)
 {
@@ -49,9 +50,13 @@ int main(int, char**)
 			cap.grab();
 		}
 
+		Mat frame;
+		cap>>frame;
+
     for(;loop;)
     {
-    	Mat frame;
+    	Mat old_frame;
+    	frame.copyTo(old_frame);
     	//olframe=frame
     	//cap.grab();
     	cap.grab();
@@ -68,7 +73,8 @@ int main(int, char**)
 
 
 
-        imshow("video", frame);
+        //imshow("video", frame);
+        imshow("video", GetPoints(frame,old_frame));
 
         char key=waitKey(1);
 
@@ -89,32 +95,6 @@ int main(int, char**)
     return 0;
 }
 
-void CalcVelocity(vector<Vec2f>& prevPts,vector<Vec2f>& nextPts,vector<float>& Vel,
-        Vec2f leftEdge,Vec2f rightEdge,float yFloor,int fCamara,float DeltaTime,int rows,int cols){
-	CV_Assert(Vel.empty());
-    int a0left=leftEdge[0] +rows/2-leftEdge[1]*cols/2;
-    int a0right=rightEdge[0] +rows/2-rightEdge[1]*cols/2;
 
-    for (int i = 0; i < prevPts.size(); ++i){
-        //check where is the point and calc velocity
-        int x=prevPts[i][0];
-        if (x <cols/2) {  //left side
-            if (prevPts[i][1]<leftEdge[1]*x + a0left ){//on the wall
-                Vel.push_back(yFloor*fCamara*(1/(leftEdge[0]+nextPts[i][0]*leftEdge[1])-1/(leftEdge[0]+x*leftEdge[1]))/DeltaTime);
-            }else{
-                Vel.push_back(yFloor*fCamara*(1/nextPts[i][1]-1/prevPts[i][1])/DeltaTime);
-            }
-
-        }else{//right side
-            if (prevPts[i][1]<rightEdge[1]*x + a0right ){//on the wall
-                Vel.push_back(yFloor*fCamara*(1/(rightEdge[0]+nextPts[i][0]*rightEdge[1])-1/(rightEdge[0]+x*rightEdge[1]))/DeltaTime);
-            }else{
-                Vel.push_back(yFloor*fCamara*(1/nextPts[i][1]-1/prevPts[i][1])/DeltaTime);
-            }
-        }
-
-    }
-
-}
 
 
