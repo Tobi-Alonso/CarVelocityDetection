@@ -20,7 +20,7 @@
 using namespace std;
 using namespace cv;
 
-Mat GetPoints(Mat frame,Mat old_frame);
+float GetSpeed(Mat& frame,Mat& old_frame,Vec2f leftEdge,Vec2f rightEdge,float yFloor,int fCamara,float DeltaTime);
 
 //void CalcVelocity(vector<Vec2f>&,vector<Vec2f>&,vector<float>&,Vec2f,Vec2f,float,int);
 

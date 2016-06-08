@@ -65,10 +65,10 @@ Vec2f Street_edge::GetEdge(const Mat &frame)
     const   int num_lines=50;
     const   float resolution_rho=1;
     const   float resolution_theta=CV_PI/180;
-    const   double reduction =.5;
+    //const   double reduction =.5;
 
-	cvtColor(frame,aux,CV_BGR2GRAY);
-
+	//cvtColor(frame,aux,CV_BGR2GRAY);
+    frame.copyTo(aux);
     Mat gray_img;
 	if (street_side){//Right side
 		gray_img=aux(Range(row_hz,aux.rows),Range(aux.cols/2,aux.cols));

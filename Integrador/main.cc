@@ -11,18 +11,6 @@
 using namespace cv;
 using namespace std;
 
-#define DIBUJAR_LINEA(edge,side){\
-	Point pt1, pt2;		\
-	double a = edge[0], b = edge[1];\
-	pt1.x = 0;\
-	pt1.y = a;\
-	pt2.x = frame.cols;\
-	pt2.y = a + b*frame.cols;\
-	line(  frame, pt1, pt2, Scalar(0,0,255), 3, CV_AA);\
-}
-
-
-
 int main(int, char**)
 {
 	 VideoCapture cap("/home/tobi/Documentos/Facu/vision/fuentes-proyecto/vid1.mp4"); // open the default camera
@@ -38,43 +26,55 @@ int main(int, char**)
 
     //parameters
     	const int HTthreshold=400;
-    	const unsigned char Sobelthreshold=120;
+    	const unsigned char Sobelthreshold=120;    //poner int, mas eficiente
+        const float HeightCamera=1.6;
+        const int fCamara=1690;     //focal dist. in pixels
+        const int FPS_DIV=2;
+        const float DeltaTime=FPS_DIV/cap.get(CV_CAP_PROP_FPS);
 
     //instantiation of street edges detectors
 		Street_edge	left_edge(HTthreshold,Sobelthreshold,LEFT_SIDE);
 		Street_edge right_edge(HTthreshold,Sobelthreshold,RIGHT_SIDE);
 
 	//discard first frames due to their lower quality
-		for (int i = 0; i < 30; ++i)
-		{
-			cap.grab();
-		}
+		for (int i = 0; i < 30; ++i){ cap.grab();}
 
-		Mat frame;
+		Mat frame,gray_frame;
 		cap>>frame;
+        cvtColor(frame,gray_frame,CV_BGR2GRAY);
+        equalizeHist(gray_frame,gray_frame);
 
     for(;loop;)
     {
-    	Mat old_frame;
-    	frame.copyTo(old_frame);
-    	//olframe=frame
-    	//cap.grab();
-    	cap.grab();
+    	Mat old_gray_frame;
+    	gray_frame.copyTo(old_gray_frame);
+  
+
+      	for (int i = 0; i < FPS_DIV-1; ++i){
+            cap.grab();
+        }
+        
         cap >> frame; // get a new frame from camera
 
-        Vec2f Lline=left_edge.GetEdge(frame);
-        Vec2f Rline=right_edge.GetEdge(frame);
+        cvtColor(frame,gray_frame,CV_BGR2GRAY);
+
+        //get the street edges from the gray frame not ecualized
+            Vec2f LEdge=left_edge.GetEdge(gray_frame);
+            Vec2f REdge=right_edge.GetEdge(gray_frame);
 
 
+        equalizeHist(gray_frame,gray_frame);
 
-     	//llamar a goodfeatures
-     	//llamar calcflow
-     	//determinar velocidad de punto
+        float Velocity = GetSpeed(gray_frame,old_gray_frame,LEdge,REdge,HeightCamera,fCamara,DeltaTime);
+     	
+        //Use of Kalman Filter to filter noise 
+
+        cout<<"car's Velocity:"<<Velocity<<endl;
 
 
 
         //imshow("video", frame);
-        imshow("video", GetPoints(frame,old_frame));
+        //imshow("video", GetPoints(frame,old_frame));
 
         char key=waitKey(1);
 
