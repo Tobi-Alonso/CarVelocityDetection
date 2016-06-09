@@ -55,7 +55,7 @@ void Street_edge::SetThresholdHS(int TH,int TS)
 
 Vec2f Street_edge::GetEdge(const Mat &frame)
 {
-	Mat aux,step1,step2;
+	Mat aux;
 	vector<Vec2f> lines;
 	vector<int> accum;
     Mat mesurement;
@@ -77,17 +77,16 @@ Vec2f Street_edge::GetEdge(const Mat &frame)
 		flip(gray_img,gray_img,1);
 	}
 
-    imConditioning(gray_img).copyTo(step1);
-    DetectEdges(step1).copyTo(step2);
+    gray_img=imConditioning(gray_img);
+    gray_img=DetectEdges(gray_img);
 
     //resize(step2,step2,Size(),reduction,reduction,INTER_LINEAR);
 
-    myHoughLines( step2, lines, accum,resolution_rho, resolution_theta, thresholdH,num_lines);
+    myHoughLines( gray_img, lines, accum,resolution_rho, resolution_theta, thresholdH,num_lines);
     criteriaFilter(lines,accum,mesurement);
 
     KF.predict();
     Mat bestGuess=KF.correct(mesurement);
-    //Mat bestGuess;mesurement.copyTo(bestGuess);
     param=coordinateConv(bestGuess);
 	return param;
 }

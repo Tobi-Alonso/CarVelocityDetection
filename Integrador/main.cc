@@ -28,7 +28,7 @@ int main(int, char**)
     	const int HTthreshold=400;
     	const unsigned char Sobelthreshold=120;    //poner int, mas eficiente
         const float HeightCamera=1.6;
-        const int fCamara=1680;     //focal dist. in pixels , need to calculate correctly
+        const int fCamara=1680;     //Z coordinate in pixels to image plane  , need to calculate correctly
         const int FPS_DIV=2;
         const float DeltaTime=FPS_DIV/cap.get(CV_CAP_PROP_FPS);
 
