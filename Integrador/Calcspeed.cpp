@@ -7,6 +7,9 @@
 
 #include "Calcspeed.h"
 
+
+//yFloor*fCamara/DeltaTime se repite en todos, aplicarlo a la velocidad promedio.
+
 static void CalcSpeed(vector<Point2f>& prevPts,vector<Point2f>& nextPts,vector<uchar>& features_found,vector<float>& feature_errors,
 		vector<float>& Vel, Vec2f leftEdge,Vec2f rightEdge,float yFloor,int fCamara,float DeltaTime,int rows,int cols){
 	CV_Assert(Vel.empty());
@@ -19,16 +22,16 @@ static void CalcSpeed(vector<Point2f>& prevPts,vector<Point2f>& nextPts,vector<u
 			int x=prevPts[i].x;
 			if (x <cols/2) {  //left side
 				if (prevPts[i].y<leftEdge[1]*x + a0left ){//on the wall
-					Vel.push_back(yFloor*fCamara*(1/(leftEdge[0]+(nextPts[i].x-cols/2)*leftEdge[1])-1/(leftEdge[0]+(x-cols/2)*leftEdge[1]))/DeltaTime);
+					Vel.push_back(yFloor*fCamara*(1/(leftEdge[0]+(x-cols/2)*leftEdge[1])-1/(leftEdge[0]+(nextPts[i].x-cols/2)*leftEdge[1]))/DeltaTime);
 				}else{
-					Vel.push_back(yFloor*fCamara*(1/nextPts[i].y-1/prevPts[i].y)/DeltaTime);
+					Vel.push_back(yFloor*fCamara*(1/prevPts[i].y-1/nextPts[i].y)/DeltaTime);
 				}
 
 			}else{//right side
 				if (prevPts[i].y<rightEdge[1]*x + a0right ){//on the wall
-					Vel.push_back(yFloor*fCamara*(1/(rightEdge[0]+(nextPts[i].x-cols/2)*rightEdge[1])-1/(rightEdge[0]+x*rightEdge[1]))/DeltaTime);
+					Vel.push_back(yFloor*fCamara*(1/(rightEdge[0]+(x-cols/2)*rightEdge[1])-1/(rightEdge[0]+(nextPts[i].x-cols/2)*rightEdge[1]))/DeltaTime);
 				}else{
-					Vel.push_back(yFloor*fCamara*(1/nextPts[i].y-1/prevPts[i].y)/DeltaTime);
+					Vel.push_back(yFloor*fCamara*(1/prevPts[i].y-1/nextPts[i].y)/DeltaTime);
 				}
 			}
     	}
@@ -76,8 +79,18 @@ float GetSpeed(Mat& frame,Mat& old_frame,Vec2f leftEdge,Vec2f rightEdge,float yF
 							Point pi( ceil( PrevPts[i].x ), ceil( PrevPts[i].y ) );
 							Point pf( ceil( NextPts[i].x ), ceil( NextPts[i].y ) );
 							//line( video, pi, pf, CV_RGB(255,0,0), 2 );
-							//circle(aux,pf,);
+							circle(aux,pf,2,CV_RGB(0,255,0));
 							line(aux, pi, pf, CV_RGB(255,0,0),2,8,0);
+
+							//print left edge
+								Point l1(frame.cols/2,leftEdge[0] +frame.rows/2);
+								Point l2(0,leftEdge[0]-frame.cols/2*leftEdge[1]+frame.rows/2);
+								line(aux, l1, l2, CV_RGB(0,0,255),2,8,0);
+
+							//print rightedge
+								Point r1(frame.cols/2,rightEdge[0]+frame.rows/2 );
+								Point r2(frame.cols-1,rightEdge[0]+frame.cols/2*rightEdge[1]+frame.rows/2);
+								line(aux, r1, r2, CV_RGB(0,255,0),2,8,0);
 						}
 					}
 		imshow("video",aux);

@@ -69,9 +69,10 @@ int main(int, char**)
      	
         //Use of Kalman Filter to filter noise 
 
-        cout<<"car's Velocity:"<<Velocity<<endl;
+        cout<<"\n car's Velocity:"<<Velocity<<endl;
 
-
+        cout<<"Left coef"<<LEdge[0]<<" y "<< LEdge[1]<<endl;
+        cout<<"Right coef"<<REdge[0]<<" y "<< REdge[1]<<endl;
 
         //imshow("video", frame);
         //imshow("video", GetPoints(frame,old_frame));
