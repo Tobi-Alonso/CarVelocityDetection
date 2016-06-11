@@ -58,7 +58,9 @@ float GetSpeed(Mat& frame,Mat& old_frame,Vec2f leftEdge,Vec2f rightEdge,float yF
 		goodFeaturesToTrack( old_frame,PrevPts,maxCorners,qualityLevel,minDistance,cv::Mat(),blockSize,false,k);
 		//cornerSubPix( gray, PrevPts, Size( win_size, win_size ), Size( -1, -1 ),
 		//		                   TermCriteria( CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 20, 0.03 ) );
-
+	
+	
+	// pasarle puntos no solo del frame k-1, sino tambien del k-2
 	// track them in the next frame
 	    std::vector<uchar> features_found;
 	    features_found.reserve(maxCorners);
