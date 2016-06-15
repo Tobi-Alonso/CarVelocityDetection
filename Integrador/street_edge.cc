@@ -94,6 +94,7 @@ Vec2f Street_edge::GetEdge(const Mat &frame)
 Mat Street_edge::imConditioning(const Mat src)
 {
     Mat dst;
+    //eliminar el filtrado con la gausiana, usar filter2d sumando la gauseana con nuestro gradiente
 	GaussianBlur(src, dst, Size(5,5), 3.5, 3.5);
 	equalizeHist(dst,dst);
 	return dst;
