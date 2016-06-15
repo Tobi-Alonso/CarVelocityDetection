@@ -11,6 +11,8 @@
 using namespace cv;
 using namespace std;
 
+bool get_point_speed=false;
+
 int main(int, char**)
 {
 	 VideoCapture cap("/home/tobi/Documentos/Facu/vision/ProyectoFinal/fuentes-proyecto/vid1.mp4"); // open the default camera
@@ -23,6 +25,7 @@ int main(int, char**)
 
     //program flags
     	bool loop=true;
+
 
     //parameters
     	const int HTthreshold=400;
@@ -101,6 +104,9 @@ int main(int, char**)
 				//do what needs to be done before coming back
 					cvtColor(frame,gray_frame,CV_BGR2GRAY);
 					equalizeHist(gray_frame,gray_frame);
+				break;
+			case 'g':
+				get_point_speed=true;
 				break;
 
 

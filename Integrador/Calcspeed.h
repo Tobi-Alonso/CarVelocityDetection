@@ -23,6 +23,8 @@ using namespace cv;
 //agregar const a todo...
 float GetSpeed(Mat& frame,Mat& old_frame,Vec2f leftEdge,Vec2f rightEdge,float yFloor,int fCamara,float DeltaTime);
 
+extern bool get_point_speed;
+
 //void CalcVelocity(vector<Vec2f>&,vector<Vec2f>&,vector<float>&,Vec2f,Vec2f,float,int);
 
 #endif /* CALCSPEED_H_ */
