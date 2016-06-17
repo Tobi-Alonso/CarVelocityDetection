@@ -10,10 +10,7 @@
 
 #include <iostream>
 #include <fstream>
-#include "opencv2/highgui/highgui.hpp"
-#include <vector>
-#include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/video/tracking.hpp"
+
 
 class FeaturesFlow
 {
@@ -31,8 +28,6 @@ class FeaturesFlow
 
 	//gets
 
-
-
 };
 
 
@@ -41,7 +36,7 @@ class FeaturesFlow3D: public FeaturesFlow
 {
 	protected:
 	Point3f Speed3D;
-	Point3f Next3d;
+	Point3f Next3D;
 
 	public:
 	FeaturesFlow3D(arguments);
