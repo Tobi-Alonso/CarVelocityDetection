@@ -1,5 +1,5 @@
 /*
- * street_edge.cc
+ * streetEdge.cc
  *
  *  Created on: 02/06/2016
  *      Author: tobi
@@ -9,7 +9,7 @@
 
 
 // constructor por defecto
-Street_edge::Street_edge(void):
+streetEdge::streetEdge(void):
 thresholdH(300),
 thresholdS(100),
 street_side(LEFT_SIDE)
@@ -27,7 +27,7 @@ street_side(LEFT_SIDE)
 
 }
 // constructor general
-Street_edge::Street_edge(int TH, unsigned char TS, bool side):
+streetEdge::streetEdge(int TH, unsigned char TS, bool side):
 thresholdH(TH),
 thresholdS(TS),
 street_side(side)
@@ -46,14 +46,14 @@ street_side(side)
 }
 
 // función miembro SetData()
-void Street_edge::SetThresholdHS(int TH,int TS)
+void streetEdge::SetThresholdHS(int TH,int TS)
 {
 	thresholdH = TH;
 	thresholdS = TS;
 }
 
 
-Vec2f Street_edge::GetEdge(const Mat &frame)
+Vec2f streetEdge::GetEdge(const Mat &frame)
 {
 	Mat aux;
 	vector<Vec2f> lines;
@@ -91,7 +91,7 @@ Vec2f Street_edge::GetEdge(const Mat &frame)
 	return param;
 }
 
-Mat Street_edge::imConditioning(const Mat src)
+Mat streetEdge::imConditioning(const Mat src)
 {
     Mat dst;
     //eliminar el filtrado con la gausiana, usar filter2d sumando la gauseana con nuestro gradiente
@@ -100,7 +100,7 @@ Mat Street_edge::imConditioning(const Mat src)
 	return dst;
 }
 
-Mat Street_edge::DetectEdges(const Mat src)
+Mat streetEdge::DetectEdges(const Mat src)
 {
 	Mat edge;
 	filter2D(src,edge,-1,sobel_kernel,Point(-1,-1));
@@ -108,7 +108,7 @@ Mat Street_edge::DetectEdges(const Mat src)
 	return edge;
 }
 
-void Street_edge::myHoughLines( const Mat &img,vector<Vec2f> &lines,vector<int> &weights,
+void streetEdge::myHoughLines( const Mat &img,vector<Vec2f> &lines,vector<int> &weights,
     float rho, float theta, int threshold,int linesMax )
 {
 	cv::AutoBuffer<int> _accum, _sort_buf;
@@ -187,7 +187,7 @@ void Street_edge::myHoughLines( const Mat &img,vector<Vec2f> &lines,vector<int> 
     }
 }
 
-void Street_edge::kalmanConfig(void){
+void streetEdge::kalmanConfig(void){
     KF.init(4,2);
     //Vec2f state;
     // intialization of KF...
@@ -203,7 +203,7 @@ void Street_edge::kalmanConfig(void){
     setIdentity(KF.errorCovPost, Scalar::all(.1));
 }
 
-void Street_edge::criteriaFilter(vector<Vec2f> &lines,vector<int> &accum,Mat &measure){
+void streetEdge::criteriaFilter(vector<Vec2f> &lines,vector<int> &accum,Mat &measure){
 
     //criteria
         const float THETA_MAX=2.48;
@@ -254,7 +254,7 @@ void Street_edge::criteriaFilter(vector<Vec2f> &lines,vector<int> &accum,Mat &me
 }
 
 
-Vec2f Street_edge::coordinateConv(Mat &bestGuess){
+Vec2f streetEdge::coordinateConv(Mat &bestGuess){
 	Vec2f param;
 	int k=street_side?-1:1;
     param[1]=k*cos(bestGuess.at<float>(1))/sin(bestGuess.at<float>(1));

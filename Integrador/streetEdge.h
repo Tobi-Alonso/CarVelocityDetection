@@ -1,5 +1,5 @@
 /*
- * street_edge.h
+ * streetEdge.h
  *
  *  Created on: 02/06/2016
  *      Author: tobi
@@ -23,7 +23,7 @@ using namespace cv;
 #define LEFT_SIDE false
 
 
-class Street_edge
+class streetEdge
 {
 	private:
 		Mat last_measure;		//best guess of real street edge
@@ -47,8 +47,8 @@ class Street_edge
 
 	public:
 		// Constructores
-		Street_edge(void);
-		Street_edge(int,unsigned char ,bool);
+		streetEdge(void);
+		streetEdge(int,unsigned char ,bool);
 
 		Vec2f GetEdge(const Mat&);
 		inline bool GetSide(){ return street_side;}
