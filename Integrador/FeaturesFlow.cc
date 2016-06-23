@@ -2,25 +2,34 @@
  * FeaturesFlow.cc
  *
  *  Created on: 17/06/2016
- *      Author: ezequiel
+ *      Author: ezequiel & Tobi
  */
 
 
 #include "FeaturesFlow.h"
+//######################################################################################################
+//################################---------FeaturesFlow Methods---------################################
+//######################################################################################################
+
+
+/*FeaturesFlow::FeaturesFlow(int MaxElements){
+	Prev.reserve(MaxElements);
+	Next.reserve(MaxElements);
+	MatchError.reserve(MaxElements);
+}*/
+
 
 FeaturesFlow::FeaturesFlow(vector<Point2f>& Previous, vector<Point2f>& _next, vector<float>& error, size_t time)
-{
-	for (unsigned int i=0;i<Previous.size();i++)
-	{
-		Prev.push_back(Previous[i]);
-		Next.push_back(_next[i]);
-		MatchError.push_back(error[i]);
-	}
-	timeNext=time;
+:	timeNext(time){
+	//profe conviene haber llamado al contructor vector<T> v(size_type n); antes, de la sig forma: por ej
+	//Prev(Previous.size);		???
+	Prev=Previous;
+	Next=_next;
+	MatchError=error;
 
 }
 FeaturesFlow::FeaturesFlow(vector<Point2f>& Previous, vector<Point2f>& _next, vector<float>& error, size_t time,
-															vector<uchar>& features_found)
+															vector<uchar>& features_found):	timeNext(time)
 {
 	for (unsigned int i=0;i<Previous.size();i++)
 	{
@@ -30,12 +39,12 @@ FeaturesFlow::FeaturesFlow(vector<Point2f>& Previous, vector<Point2f>& _next, ve
 			Next.push_back(_next[i]);
 			MatchError.push_back(error[i]);
 		}
-		timeNext=time;
+
 	}
 
 }
 FeaturesFlow::FeaturesFlow(vector<Point2f>& Previous, vector<Point2f>& _next, vector<float>& error, size_t time,
-							vector<uchar>& features_found,float max_match_error)
+							vector<uchar>& features_found,float max_match_error):	timeNext(time)
 {
 	for (unsigned int i=0;i<Previous.size();i++)
 	{
@@ -45,7 +54,7 @@ FeaturesFlow::FeaturesFlow(vector<Point2f>& Previous, vector<Point2f>& _next, ve
 			Next.push_back(_next[i]);
 			MatchError.push_back(error[i]);
 		}
-		timeNext=time;
+
 	}
 
 }
@@ -54,6 +63,15 @@ FeaturesFlow::FeaturesFlow(vector<Point2f>& Previous, vector<Point2f>& _next, ve
 
 
 
+//########################################################################################################
+//################################---------FeaturesFlow3D Methods---------################################
+//########################################################################################################
+
+
+/*FeaturesFlow3D::FeaturesFlow3D(int MaxElements):FeaturesFlow(MaxElements){
+	speed_3D.reserve(MaxElements);
+	next_3D.reserve(MaxElements);
+}*/
 
 void FeaturesFlow3D::Setspeed_3D(vector<Point3f> speed)
 {
@@ -146,22 +164,30 @@ ifstream& operator>> (ifstream& ifs, StreetFeaturesFlow& nieta)
 
 
 
+//############################################################################################################
+//################################---------StreetFeaturesFlow Methods---------################################
+//############################################################################################################
 
-void StreetFeaturesFlow::CalZparam(Vec2f leftEdge,Vec2f rightEdge,int rows,int cols){//function with the geometrical info of the street
+/*StreetFeaturesFlow::StreetFeaturesFlow(int MaxElements):FeaturesFlow3D(MaxElements){
+	reliability.reserve(MaxElements);
+}
+*/
+void StreetFeaturesFlow::CalZparam(Vec2f left_edge,Vec2f right_edge,int rows,int cols){//function with the geometrical info of the street
 
-  int a0left=leftEdge[0] +rows/2-leftEdge[1]*cols/2;
-  int a0right=rightEdge[0] +rows/2-rightEdge[1]*cols/2;
+	//change of coordinates and wall adjust
+	  int a0left=1/(1/left_edge[0] - x_wall/(y_floor*f_camara) ) +frame_rows/2-left_edge[1]*frame_cols/2;  
+	  int a0right=1/(1/right_edge[0] + x_wall/(y_floor*f_camara) ) +frame_rows/2-right_edge[1]*frame_cols/2;
 
   for (unsigned int i = 0; i < Prev.size(); ++i){
 		//check where is the point and calc velocity
 		int x=Prev[i].x;
 		if (x <cols/2) {  //left side
 
-			if (Prev[i].y<leftEdge[1]*x + a0left ){//on the wall
+			if (Prev[i].y<left_edge[1]*x + a0left ){//on the wall
 
 				reliability.push_back(1);
-				next_3D.push_back(Point3f(0,0,1/(leftEdge[0]+(Next[i].x-cols/2)*leftEdge[1])));
-				speed_3D.push_back(Point3f(0,0,1/(leftEdge[0]+(x-cols/2)*leftEdge[1])-next_3D.back().z ));
+				next_3D.push_back(Point3f(0,0,1/(left_edge[0]+(Next[i].x-cols/2)*left_edge[1])));
+				speed_3D.push_back(Point3f(0,0,1/(left_edge[0]+(x-cols/2)*left_edge[1])-next_3D.back().z ));
 
 			}else{
 				reliability.push_back(10);
@@ -171,10 +197,10 @@ void StreetFeaturesFlow::CalZparam(Vec2f leftEdge,Vec2f rightEdge,int rows,int c
 
 		}else{//right side
 
-			if (Prev[i].y<rightEdge[1]*x + a0right ){//on the wall
+			if (Prev[i].y<right_edge[1]*x + a0right ){//on the wall
 				reliability.push_back(1);
-				next_3D.push_back(Point3f(0,0,1/(rightEdge[0]+(Next[i].x-cols/2)*rightEdge[1])));
-				speed_3D.push_back(Point3f(0,0,1/(rightEdge[0]+(x-cols/2)*rightEdge[1])-next_3D.back().z));
+				next_3D.push_back(Point3f(0,0,1/(right_edge[0]+(Next[i].x-cols/2)*right_edge[1])));
+				speed_3D.push_back(Point3f(0,0,1/(right_edge[0]+(x-cols/2)*right_edge[1])-next_3D.back().z));
 
 			}else{
 				reliability.push_back(10);
@@ -185,6 +211,53 @@ void StreetFeaturesFlow::CalZparam(Vec2f leftEdge,Vec2f rightEdge,int rows,int c
   }
 }
 
+
+void StreetFeaturesFlow::CalZparam(Vec2f left_edge,Vec2f right_edge){//function with the geometrical info of the street
+	// wall adjust
+	 float aux=left_edge[0];
+	 left_edge[0]=1/(1/left_edge[0] - x_wall/(y_floor*f_camara) );
+	 left_edge[1]=left_edge[0]*left_edge[1]/aux;
+	 aux=right_edge[0];
+	 right_edge[0]=1/(1/right_edge[0] + x_wall/(y_floor*f_camara) );
+	 right_edge[1]=right_edge[0]*right_edge[1]/aux;
+	//change of coordinates
+	  int a0left=left_edge[0] +frame_rows/2-left_edge[1]*frame_cols/2;
+	  int a0right=right_edge[0] +frame_rows/2-right_edge[1]*frame_cols/2;
+
+  for (unsigned int i = 0; i < Prev.size(); ++i){
+		//check where is the point and calc velocity
+		int x=Prev[i].x;
+		if (x <frame_cols/2) {  //left side
+
+			if (Prev[i].y<left_edge[1]*x + a0left ){//on the wall
+
+				reliability.push_back(1);
+				next_3D.push_back(Point3f(0,0,1/(left_edge[0]+(Next[i].x-frame_cols/2)*left_edge[1])));
+				speed_3D.push_back(Point3f(0,0,1/(left_edge[0]+(x-frame_cols/2)*left_edge[1])-next_3D.back().z ));
+
+			}else{
+				reliability.push_back(10);
+				next_3D.push_back(Point3f(0,0,1/(Next[i].y-frame_rows/2)));
+				speed_3D.push_back(Point3f(0,0,1/(Prev[i].y-frame_rows/2)-next_3D.back().z));
+			}
+
+		}else{//right side
+
+			if (Prev[i].y<right_edge[1]*x + a0right ){//on the wall
+				reliability.push_back(1);
+				next_3D.push_back(Point3f(0,0,1/(right_edge[0]+(Next[i].x-frame_cols/2)*right_edge[1])));
+				speed_3D.push_back(Point3f(0,0,1/(right_edge[0]+(x-frame_cols/2)*right_edge[1])-next_3D.back().z));
+
+			}else{
+				reliability.push_back(10);
+				next_3D.push_back(Point3f(0,0,1/(Next[i].y-frame_rows/2)));
+				speed_3D.push_back(Point3f(0,0,1/(Prev[i].y-frame_rows/2)-next_3D.back().z));
+			}
+		}
+  }
+
+
+}
 
 
 

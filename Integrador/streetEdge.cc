@@ -8,44 +8,40 @@
 #include "streetEdge.h"
 
 
-// constructor por defecto
+//default constructor
 streetEdge::streetEdge(void):
 thresholdH(300),
 thresholdS(100),
-street_side(LEFT_SIDE)
-{/*
-	thresholdH=0;
-	thresholdS=0;
-	street_side = LEFT_SIDE;*/
+street_side(LEFT_SIDE),
+KF(4,2)
+{
     sobel_kernel=(Mat_<char>(5,5)<< 0,-1,-1,-1,-1,
-                                    1,0,-1,-1,-1,
-                                    1,1,0,-1,-1,
-                                    1,1,1,0,-1,
-                                    1,1,1,1,0);
+                                    1, 0,-1,-1,-1,
+                                    1, 1, 0,-1,-1,
+                                    1, 1, 1, 0,-1,
+                                    1, 1, 1, 1, 0);
     last_measure=(Mat_<float>(2,1)<< 0,CV_PI*3/4);
     kalmanConfig();
 
 }
-// constructor general
+//full constructor
 streetEdge::streetEdge(int TH, unsigned char TS, bool side):
 thresholdH(TH),
 thresholdS(TS),
-street_side(side)
+street_side(side),
+KF(4,2)
 {
-		/*
-	thresholdH=TH;
-	thresholdS=TS;
-	street_side = side;*/
+
     sobel_kernel=(Mat_<char>(5,5)<< 0,-1,-1,-1,-1,
-                                    1,0,-1,-1,-1,
-                                    1,1,0,-1,-1,
-                                    1,1,1,0,-1,
-                                    1,1,1,1,0);
+                                    1, 0,-1,-1,-1,
+                                    1, 1, 0,-1,-1,
+                                    1, 1, 1, 0,-1,
+                                    1, 1, 1, 1, 0);
     last_measure=(Mat_<float>(2,1)<< 0,CV_PI*3/4);
     kalmanConfig();
 }
 
-// función miembro SetData()
+
 void streetEdge::SetThresholdHS(int TH,int TS)
 {
 	thresholdH = TH;
@@ -55,7 +51,6 @@ void streetEdge::SetThresholdHS(int TH,int TS)
 
 Vec2f streetEdge::GetEdge(const Mat &frame)
 {
-	Mat aux;
 	vector<Vec2f> lines;
 	vector<int> accum;
     Mat mesurement;
@@ -68,12 +63,13 @@ Vec2f streetEdge::GetEdge(const Mat &frame)
     //const   double reduction =.5;
 
 	//cvtColor(frame,aux,CV_BGR2GRAY);
-    frame.copyTo(aux);
+   // frame.copyTo(aux);
+
     Mat gray_img;
 	if (street_side){//Right side
-		gray_img=aux(Range(row_hz,aux.rows),Range(aux.cols/2,aux.cols));
+		gray_img=frame(Range(row_hz,frame.rows),Range(frame.cols/2,frame.cols)).clone();
 	}else{ //left side
-        gray_img=aux(Range(row_hz,aux.rows),Range(0,aux.cols/2));
+        gray_img=frame(Range(row_hz,frame.rows),Range(0,frame.cols/2)).clone();
 		flip(gray_img,gray_img,1);
 	}
 
@@ -188,7 +184,7 @@ void streetEdge::myHoughLines( const Mat &img,vector<Vec2f> &lines,vector<int> &
 }
 
 void streetEdge::kalmanConfig(void){
-    KF.init(4,2);
+    //KF.init(4,2);
     //Vec2f state;
     // intialization of KF...
     KF.transitionMatrix = (Mat_<float>(4, 4) << 1,0,1,0,   0,1,0,1,  0,0,.2,0,  0,0,0,.5);

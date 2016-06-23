@@ -22,12 +22,18 @@ using namespace cv;
 #define RIGHT_SIDE true
 #define LEFT_SIDE false
 
+//criteria filter parameters
+//#define  THETA_MAX  ((float)2.48)
+//#define  THETA_MIN  ((float)(0.17+CV_PI/2))
+//#define  RHO_MAX  	((float)150)
+
 
 class streetEdge
 {
 	private:
 		Mat last_measure;		//best guess of real street edge
 		Mat sobel_kernel;		//sobel kernel used in Canny
+		//Mat gray_img; 			//part of the gray frame used to get the edges
 
 		int thresholdH;
 		unsigned char thresholdS;
@@ -41,7 +47,6 @@ class streetEdge
 						float rho, float theta, int threshold,int linesMax );
 		void criteriaFilter(vector<Vec2f>&,vector<int>&,Mat&);
 		// SetThings
-		void SetThresholdHS(int,int);
 		void kalmanConfig(void);
 		Vec2f coordinateConv(Mat&);
 
@@ -52,6 +57,7 @@ class streetEdge
 
 		Vec2f GetEdge(const Mat&);
 		inline bool GetSide(){ return street_side;}
+		void SetThresholdHS(int,int);
 
 	};
 
