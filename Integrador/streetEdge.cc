@@ -15,28 +15,31 @@ thresholdS(100),
 street_side(LEFT_SIDE),
 KF(4,2)
 {
-    sobel_kernel=(Mat_<char>(5,5)<< 0,-1,-1,-1,-1,
-                                    1, 0,-1,-1,-1,
-                                    1, 1, 0,-1,-1,
-                                    1, 1, 1, 0,-1,
-                                    1, 1, 1, 1, 0);
+	kernel=(Mat_<float>(5,5)<< 	0,-1,-1,-1,-1,
+								1, 0,-1,-1,-1,
+								1, 1, 0,-1,-1,
+								1, 1, 1, 0,-1,
+								1, 1, 1, 1, 0);
+
     last_measure=(Mat_<float>(2,1)<< 0,CV_PI*3/4);
     kalmanConfig();
 
 }
+
 //full constructor
 streetEdge::streetEdge(int TH, unsigned char TS, bool side):
+gray_img(1,1,CV_8U),
 thresholdH(TH),
 thresholdS(TS),
 street_side(side),
 KF(4,2)
 {
+	kernel=(Mat_<float>(5,5)<< 	0,-1,-1,-1,-1,
+								1, 0,-1,-1,-1,
+								1, 1, 0,-1,-1,
+								1, 1, 1, 0,-1,
+								1, 1, 1, 1, 0);
 
-    sobel_kernel=(Mat_<char>(5,5)<< 0,-1,-1,-1,-1,
-                                    1, 0,-1,-1,-1,
-                                    1, 1, 0,-1,-1,
-                                    1, 1, 1, 0,-1,
-                                    1, 1, 1, 1, 0);
     last_measure=(Mat_<float>(2,1)<< 0,CV_PI*3/4);
     kalmanConfig();
 }
@@ -53,55 +56,35 @@ Vec2f streetEdge::GetEdge(const Mat &frame)
 {
 	vector<Vec2f> lines;
 	vector<int> accum;
-    Mat mesurement;
     Vec2f param;
 
-	const   int row_hz=frame.rows/2; 	//row of horizon
-    const   int num_lines=50;
-    const   float resolution_rho=1;
-    const   float resolution_theta=CV_PI/180;
-    //const   double reduction =.5;
-
-	//cvtColor(frame,aux,CV_BGR2GRAY);
-   // frame.copyTo(aux);
-
-    Mat gray_img;
 	if (street_side){//Right side
-		gray_img=frame(Range(row_hz,frame.rows),Range(frame.cols/2,frame.cols)).clone();
+		gray_img=frame(Range(frame.rows/2,frame.rows),Range(frame.cols/2,frame.cols)).clone();
 	}else{ //left side
-        gray_img=frame(Range(row_hz,frame.rows),Range(0,frame.cols/2)).clone();
+        gray_img=frame(Range(frame.rows/2,frame.rows),Range(0,frame.cols/2)).clone();
 		flip(gray_img,gray_img,1);
 	}
 
-    gray_img=imConditioning(gray_img);
-    gray_img=DetectEdges(gray_img);
+
+    DetectEdges();
 
     //resize(step2,step2,Size(),reduction,reduction,INTER_LINEAR);
 
-    myHoughLines( gray_img, lines, accum,resolution_rho, resolution_theta, thresholdH,num_lines);
-    criteriaFilter(lines,accum,mesurement);
+    myHoughLines( gray_img, lines, accum,RHO_RESULUTION, THETA_RESULUTION, thresholdH,NUM_LINES );
+    criteriaFilter(lines,accum);
 
     KF.predict();
-    Mat bestGuess=KF.correct(mesurement);
+    Mat bestGuess=KF.correct(last_measure);
     param=coordinateConv(bestGuess);
 	return param;
 }
 
-Mat streetEdge::imConditioning(const Mat src)
+void streetEdge::DetectEdges()
 {
-    Mat dst;
-    //eliminar el filtrado con la gausiana, usar filter2d sumando la gauseana con nuestro gradiente
-	GaussianBlur(src, dst, Size(5,5), 3.5, 3.5);
-	equalizeHist(dst,dst);
-	return dst;
-}
-
-Mat streetEdge::DetectEdges(const Mat src)
-{
-	Mat edge;
-	filter2D(src,edge,-1,sobel_kernel,Point(-1,-1));
-	threshold(edge, edge,thresholdS, 255,THRESH_BINARY);
-	return edge;
+	equalizeHist(gray_img,gray_img);
+	GaussianBlur(gray_img, gray_img, Size(5,5), 3.5, 3.5);
+	filter2D(gray_img,gray_img,-1,kernel,Point(-1,-1));
+	threshold(gray_img, gray_img,thresholdS, 255,THRESH_BINARY);
 }
 
 void streetEdge::myHoughLines( const Mat &img,vector<Vec2f> &lines,vector<int> &weights,
@@ -199,52 +182,49 @@ void streetEdge::kalmanConfig(void){
     setIdentity(KF.errorCovPost, Scalar::all(.1));
 }
 
-void streetEdge::criteriaFilter(vector<Vec2f> &lines,vector<int> &accum,Mat &measure){
-
-    //criteria
-        const float THETA_MAX=2.48;
-        const float THETA_MIN=(0.17+CV_PI/2);
-        const float RHO_MAX=150;
+void streetEdge::criteriaFilter(vector<Vec2f> &lines,vector<int> &accum){
 
     float theta_max_detected=0;
-    vector<Vec2f> good_lines;
-    vector<int> good_accum;
 
-    //erase bad lines
-        for( size_t i = 0; i < lines.size(); i++ ) {  //eliminar lineas que no cumplen con especificaciones
-            float rho = lines[i][0], theta = lines[i][1];
+        vector<Vec2f>::iterator ll=lines.begin();
+        vector<int>::iterator   aa=accum.begin();
+
+        size_t num_lines=lines.size();
+
+        for( size_t i = 0; i < num_lines && ll!=lines.end(); i++ ) {  //eliminar lineas que no cumplen con especificaciones
+            float rho =(*ll)[0] , theta = (*ll)[1];
 
             if(theta> THETA_MIN && theta < THETA_MAX && abs(rho)< RHO_MAX){//no tiene que ser muy horizontal, ni estara en x<1(muy vertical) y tiene que tender a pasar por el centro de la imagen
-                good_lines.push_back(lines[i]);
-                good_accum.push_back(accum[i]);
+                ll++;
+                aa++;
                 if(theta>theta_max_detected) theta_max_detected=theta;
+            }else{	//bad line
+            	ll=lines.erase(ll);
+            	aa=accum.erase(aa);
             }
         }
 
-    switch(good_lines.size()){
+
+    switch(lines.size()){
         case 0:
-            last_measure.copyTo(measure);
             break;
         case 1:
-        	measure=(Mat_<float>(2,1)<<	good_lines[0][0],good_lines[0][1]);
-        	measure.copyTo(last_measure);
+        	last_measure=(Mat_<float>(2,1)<<	lines[0][0],lines[0][1]);
             break;
         default:
             //average of the closest lines to the car in a range of 50cm
             float ac_rho=0,ac_theta=0;
             int acc_acc=0;
-            for( size_t i = 0; i < good_lines.size(); i++ ) {
-                if(good_lines[i][1]>(.80925*theta_max_detected+.32435)){  //aprox. of theta(x+.5)| x(thetamax_detected)
-                        ac_rho+=good_lines[i][0]*good_accum[i];
-                        ac_theta+=good_lines[i][1]*good_accum[i];
-                        acc_acc+=good_accum[i];
+            for( size_t i = 0; i < lines.size(); i++ ) {
+                if(lines[i][1]>(.80925*theta_max_detected+.32435)){  //aprox. of theta(x+.5)| x(thetamax_detected)
+                        ac_rho+=lines[i][0]*accum[i];
+                        ac_theta+=lines[i][1]*accum[i];
+                        acc_acc+=accum[i];
                 }
 
             }
 
-            measure=(Mat_<float>(2,1)<<ac_rho/acc_acc,ac_theta/acc_acc);
-
-            measure.copyTo(last_measure);
+            last_measure=(Mat_<float>(2,1)<<ac_rho/acc_acc,ac_theta/acc_acc);
     }
 
 }
