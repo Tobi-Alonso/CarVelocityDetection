@@ -37,9 +37,12 @@ using namespace cv;
 class streetEdge
 {
 	private:
-		Mat last_measure;		//best guess of real street edge
-		Mat kernel;		//sobel kernel used in Canny
+		Mat last_measure;		//last measure of real street edge
+		Mat filtered_measure;
+		Mat kernel;				//gradient kernel
 		Mat gray_img; 			//part of the gray frame used to get the edges
+		vector<Vec2f> lines;	//vector used to store detected lines
+		vector<int> accum;		//vector to store the score of the detected lines
 
 		int thresholdH;
 		unsigned char thresholdS;
@@ -51,9 +54,16 @@ class streetEdge
 		void myHoughLines( const Mat &img,vector<Vec2f> &lines,vector<int> &weights,
 						float rho, float theta, int threshold,int linesMax );
 		void criteriaFilter(vector<Vec2f>&,vector<int>&);
+
+
+		inline void Clear(){lines.clear();accum.clear();}
+
+
+
 		// SetThings
 		void kalmanConfig(void);
-		Vec2f coordinateConv(Mat&);
+		Vec2f coordinateConv(Mat&,Vec2f&);
+
 
 	public:
 		// Constructores
