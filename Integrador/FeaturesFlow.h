@@ -59,14 +59,13 @@ class FeaturesFlow
 				vector<Point2f>::iterator pp=Prev.begin();
 				vector<Point2f>::iterator nn=Next.begin();
 				vector<float>::iterator ee=MatchError.begin();
-				int vec_size=Prev.size();
+				size_t vec_size=Prev.size();
 
-				for (int i = 0; i < vec_size; ++i){
+				for (size_t i = 0; i < vec_size; ++i){
 					if(*ee>max_error){
 						pp=Prev.erase(pp);
 						nn=Next.erase(nn);
 						ee=MatchError.erase(ee);
-						vec_size= Prev.size();
 					}else{
 						pp++;
 						nn++;
@@ -84,14 +83,13 @@ class FeaturesFlow
 				vector<Point2f>::iterator pp=Prev.begin();
 				vector<Point2f>::iterator nn=Next.begin();
 				vector<float>::iterator ee=MatchError.begin();
-				int vec_size=Prev.size();
+				size_t vec_size=Prev.size();
 
-				for (int i = 0; i < vec_size; ++i){
+				for (size_t i = 0; i < vec_size; ++i){
 					if(status[i]){
 						pp=Prev.erase(pp);
 						nn=Next.erase(nn);
 						ee=MatchError.erase(ee);
-						vec_size= Prev.size();
 					}else{
 						pp++;
 						nn++;
@@ -109,14 +107,13 @@ class FeaturesFlow
 				vector<Point2f>::iterator pp=Prev.begin();
 				vector<Point2f>::iterator nn=Next.begin();
 				vector<float>::iterator ee=MatchError.begin();
-				int vec_size=Prev.size();
+				size_t vec_size=Prev.size();
 
-				for (int i = 0; i < vec_size; ++i){
+				for (size_t i = 0; i < vec_size; ++i){
 					if(*ee>max_error && status[i]){
 						pp=Prev.erase(pp);
 						nn=Next.erase(nn);
 						ee=MatchError.erase(ee);
-						vec_size= Prev.size();
 					}else{
 						pp++;
 						nn++;
