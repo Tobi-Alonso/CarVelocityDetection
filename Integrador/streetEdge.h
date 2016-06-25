@@ -2,7 +2,7 @@
  * streetEdge.h
  *
  *  Created on: 02/06/2016
- *      Author: tobi
+ *      Author: Author: ezequiel & Tobi
  */
 
 #ifndef STREETEDGE_H_

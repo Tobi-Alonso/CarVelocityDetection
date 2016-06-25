@@ -2,7 +2,7 @@
  * streetEdge.cc
  *
  *  Created on: 02/06/2016
- *      Author: tobi
+ *      Author: ezequiel & Tobi
  */
 
 /*M///////////////////////////////////////////////////////////////////////////////////////
@@ -100,8 +100,6 @@ void streetEdge::SetThresholdHS(int TH,int TS)
 
 Vec2f streetEdge::GetEdge(const Mat &frame)
 {
-	//vector<Vec2f> lines;
-	//vector<int> accum;
 	Clear();
 
 	if (street_side){//Right side
@@ -131,6 +129,7 @@ void streetEdge::DetectEdges()
 	equalizeHist(gray_img,gray_img);
 	GaussianBlur(gray_img, gray_img, Size(5,5), 3.5, 3.5);
 	filter2D(gray_img,gray_img,-1,kernel,Point(-1,-1));
+		//future improve, blurring and derivation together
 	threshold(gray_img, gray_img,thresholdS, 255,THRESH_BINARY);
 }
 

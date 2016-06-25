@@ -1,4 +1,8 @@
-
+/*
+ *
+ *  Created on: 17/06/2016
+ *      Author: ezequiel & Tobi
+ */
 
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
@@ -12,7 +16,7 @@
 using namespace cv;
 using namespace std;
 
-//sistem parameters
+//system parameters
   #define HT_THRESHOLD 		((int)400)
   #define SOBEL_THRESHOLD 	((int)120)
   #define HEIGHT_CAM 		((float)1.3)

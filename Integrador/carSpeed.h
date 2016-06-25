@@ -22,7 +22,7 @@
 using namespace std;
 using namespace cv;
 
-
+//Shi-Tomasi & Lucas Kanade parameters
 #define WIN_SIZE ((int)15)
 #define QUALITY_LEVEL ((float)0.01)
 #define MIN_DISTANCE ((float)10.0)
