@@ -33,7 +33,7 @@ class FeaturesFlow
 
 	public:
 		//constructors
-			FeaturesFlow(int MaxElements):Prev(MaxElements),Next(MaxElements),MatchError(MaxElements){}
+			FeaturesFlow(int MaxElements,size_t _time=0):Prev(MaxElements),Next(MaxElements),MatchError(MaxElements),timeNext(_time){}
 			FeaturesFlow(vector<Point2f>& , vector<Point2f>& , vector<float>& , size_t);
 			FeaturesFlow(vector<Point2f>& , vector<Point2f>& , vector<float>& , size_t, vector<uchar>&);
 			FeaturesFlow(vector<Point2f>& , vector<Point2f>& , vector<float>& , size_t, vector<uchar>&,float);
@@ -44,8 +44,10 @@ class FeaturesFlow
 
 		//sets
 			inline void SetTimeNext(size_t t){ timeNext=t;}
+			inline void IncTimeNext(){timeNext++;}
 
 		//gets
+			inline size_t GetTimeNext(){return timeNext;}
 			inline vector<Point2f>* GetPrevPtr(){return &Prev;}
 			inline vector<Point2f>* GetNextPtr(){return &Next;}
 			inline vector<float>* GetMatchErrorPtr(){return &MatchError;}
