@@ -19,7 +19,7 @@
 }*/
 
 
-FeaturesFlow::FeaturesFlow(vector<Point2f>& Previous, vector<Point2f>& _next, vector<float>& error, size_t time)
+template <typename T> FeaturesFlow<T>::FeaturesFlow(vector<Point_<T> >& Previous, vector<Point_<T> >& _next, vector<T>& error, size_t time)
 :	timeNext(time){
 	//profe conviene haber llamado al contructor vector<T> v(size_type n); antes, de la sig forma: por ej
 	//Prev(Previous.size);		???
@@ -28,7 +28,7 @@ FeaturesFlow::FeaturesFlow(vector<Point2f>& Previous, vector<Point2f>& _next, ve
 	MatchError=error;
 
 }
-FeaturesFlow::FeaturesFlow(vector<Point2f>& Previous, vector<Point2f>& _next, vector<float>& error, size_t time,
+template <typename T>  FeaturesFlow<T>::FeaturesFlow(vector<Point_<T> >& Previous, vector<Point_<T> >& _next, vector<T>& error, size_t time,
 															vector<uchar>& features_found):	timeNext(time)
 {
 	for (unsigned int i=0;i<Previous.size();i++)
@@ -43,8 +43,8 @@ FeaturesFlow::FeaturesFlow(vector<Point2f>& Previous, vector<Point2f>& _next, ve
 	}
 
 }
-FeaturesFlow::FeaturesFlow(vector<Point2f>& Previous, vector<Point2f>& _next, vector<float>& error, size_t time,
-							vector<uchar>& features_found,float max_match_error):	timeNext(time)
+template <typename T> FeaturesFlow<T>::FeaturesFlow(vector<Point_<T> >& Previous, vector<Point_<T> >& _next, vector<T>& error, size_t time,
+							vector<uchar>& features_found,T max_match_error):	timeNext(time)
 {
 	for (unsigned int i=0;i<Previous.size();i++)
 	{
@@ -62,7 +62,6 @@ FeaturesFlow::FeaturesFlow(vector<Point2f>& Previous, vector<Point2f>& _next, ve
 
 
 
-
 //########################################################################################################
 //################################---------FeaturesFlow3D Methods---------################################
 //########################################################################################################
@@ -73,94 +72,8 @@ FeaturesFlow::FeaturesFlow(vector<Point2f>& Previous, vector<Point2f>& _next, ve
 	next_3D.reserve(MaxElements);
 }*/
 
-void FeaturesFlow3D::Setspeed_3D(vector<Point3f> speed)
-{
-	speed_3D = speed;
-}
 
-void FeaturesFlow3D::Setnext_3D(vector<Point3f> Next)
-{
-	next_3D = Next;
-}
 
-vector<Point3f> FeaturesFlow3D::GetPrev3D()
-{
-	Point3f Prevpoint;
-	vector<Point3f> Prev;
-
-	for(unsigned int i=0;i<speed_3D.size();i++)
-	{
-		Prev[i] = speed_3D[i]+next_3D[i];
-	}
-	return Prev;
-}
-bool operator== (const StreetFeaturesFlow& a,const StreetFeaturesFlow& b)
-{
-	if (a.next_3D==b.next_3D)
-	{
-		return true;
-	}else{
-		return false;
-	}
-}
-bool operator!= (const StreetFeaturesFlow& a,const StreetFeaturesFlow& b)
-{
-	if (a.next_3D==b.next_3D)
-	{
-		return true;
-	}else	{
-		return false;
-	}
-}
-
-ostream& operator<< (ostream& ost, const StreetFeaturesFlow& nieta)
-{
-	for (unsigned int i=0;i<nieta.next_3D.size();i++)
-	{
-		ost<<"Posición en el espacio: "<<nieta.next_3D<<"Velocidad: "<< nieta.speed_3D <<endl;
-	}
-	return ost;
-
-}
-istream& operator>> (istream& ist, StreetFeaturesFlow& nieta)
-{
-	unsigned int n;
-	//vector<Point3f> features, speed;
-
-	cout << "Introduzca la cantidad de Features: ";
-	ist >> n;
-	for(unsigned int i=0;i<n;i++)
-	{
-		cout << "Introduzca Posicion del Feature de la forma (x , y , z): ";
-		cout << "Introduzca Posicion X: ";
-		ist >> nieta.next_3D[i].x;
-		cout << "Introduzca Posicion Y: ";
-		ist >> nieta.next_3D[i].y;
-		cout << "Introduzca Posicion Z: ";
-		ist >> nieta.next_3D[i].z;
-		cout << "Introduzca Velocidad del Feature de la forma (vel x ,vel y ,vel z): ";
-		cout << "Introduzca Componente de la velocidad en X: ";
-		ist >> nieta.speed_3D[i].x;
-		cout << "Introduzca Componente de la velocidad en Y: ";
-		ist >> nieta.speed_3D[i].y;
-		cout << "Introduzca Componente de la velocidad en Z: ";
-		ist >> nieta.speed_3D[i].z;
-	}
-	return ist;
-}
-ofstream& operator<< (ofstream& ofs, const StreetFeaturesFlow& nieta)
-{
-
-	for(unsigned int i=0;i<nieta.next_3D.size();i++)
-	{
-		ofs<<"\t Posición en el espacio: "<<nieta.next_3D<<"			"<<"Velocidad: "<< nieta.speed_3D <<endl;
-	}
-	return ofs;
-}
-ifstream& operator>> (ifstream& ifs, StreetFeaturesFlow& nieta)
-{
-	return ifs;
-}
 
 
 
@@ -258,6 +171,75 @@ void StreetFeaturesFlow::CalZparam(Vec2f left_edge,Vec2f right_edge){//function 
 
 
 }
+
+bool operator== (const StreetFeaturesFlow& a,const StreetFeaturesFlow& b)
+{
+	if (a.next_3D==b.next_3D)
+	{
+		return true;
+	}else{
+		return false;
+	}
+}
+bool operator!= (const StreetFeaturesFlow& a,const StreetFeaturesFlow& b)
+{
+	if (a.next_3D==b.next_3D)
+	{
+		return true;
+	}else	{
+		return false;
+	}
+}
+
+ostream& operator<< (ostream& ost, const StreetFeaturesFlow& nieta)
+{
+	for (unsigned int i=0;i<nieta.next_3D.size();i++)
+	{
+		ost<<"Posición en el espacio: "<<nieta.next_3D<<"Velocidad: "<< nieta.speed_3D <<endl;
+	}
+	return ost;
+
+}
+istream& operator>> (istream& ist, StreetFeaturesFlow& nieta)
+{
+	unsigned int n;
+	//vector<Point3f> features, speed;
+
+	cout << "Introduzca la cantidad de Features: ";
+	ist >> n;
+	for(unsigned int i=0;i<n;i++)
+	{
+		cout << "Introduzca Posicion del Feature de la forma (x , y , z): ";
+		cout << "Introduzca Posicion X: ";
+		ist >> nieta.next_3D[i].x;
+		cout << "Introduzca Posicion Y: ";
+		ist >> nieta.next_3D[i].y;
+		cout << "Introduzca Posicion Z: ";
+		ist >> nieta.next_3D[i].z;
+		cout << "Introduzca Velocidad del Feature de la forma (vel x ,vel y ,vel z): ";
+		cout << "Introduzca Componente de la velocidad en X: ";
+		ist >> nieta.speed_3D[i].x;
+		cout << "Introduzca Componente de la velocidad en Y: ";
+		ist >> nieta.speed_3D[i].y;
+		cout << "Introduzca Componente de la velocidad en Z: ";
+		ist >> nieta.speed_3D[i].z;
+	}
+	return ist;
+}
+ofstream& operator<< (ofstream& ofs, const StreetFeaturesFlow& nieta)
+{
+
+	for(unsigned int i=0;i<nieta.next_3D.size();i++)
+	{
+		ofs<<"\t Posición en el espacio: "<<nieta.next_3D<<"			"<<"Velocidad: "<< nieta.speed_3D <<endl;
+	}
+	return ofs;
+}
+ifstream& operator>> (ifstream& ifs, StreetFeaturesFlow& nieta)
+{
+	return ifs;
+}
+
 
 
 
