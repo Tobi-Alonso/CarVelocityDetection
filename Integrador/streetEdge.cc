@@ -49,34 +49,15 @@
 #include "streetEdge.h"
 
 
-//default constructor
-streetEdge::streetEdge(void):
-gray_img(1,1,CV_8U),
-lines(NUM_LINES),
-accum(NUM_LINES),
-thresholdH(300),
-thresholdS(100),
-street_side(LEFT_SIDE),
-KF(4,2)
-{
-	kernel=(Mat_<float>(5,5)<< 	0,-1,-1,-1,-1,
-								1, 0,-1,-1,-1,
-								1, 1, 0,-1,-1,
-								1, 1, 1, 0,-1,
-								1, 1, 1, 1, 0);
-
-    last_measure=(Mat_<float>(2,1)<< 0,CV_PI*3/4);
-    kalmanConfig();
-
-}
 
 //full constructor
-streetEdge::streetEdge(int TH, unsigned char TS, bool side):
+streetEdge::streetEdge(bool side,int TH_thres, unsigned char TE_thres,int num_lines):
+filtered_measure(0,CV_PI*3/4),
 gray_img(1,1,CV_8U),
-lines(NUM_LINES),
-accum(NUM_LINES),
-thresholdH(TH),
-thresholdS(TS),
+lines(num_lines),
+accum(num_lines),
+thresholdH(TH_thres),
+thresholdEdge(TE_thres),
 street_side(side),
 KF(4,2)
 {
@@ -94,12 +75,11 @@ KF(4,2)
 void streetEdge::SetThresholdHS(int TH,int TS)
 {
 	thresholdH = TH;
-	thresholdS = TS;
+	thresholdEdge = TS;
 }
 
 
-Vec2f streetEdge::GetEdge(const Mat &frame)
-{
+Vec2f streetEdge::GetEdge(const Mat &frame){
 	Clear();
 
 	if (street_side){//Right side
@@ -118,10 +98,9 @@ Vec2f streetEdge::GetEdge(const Mat &frame)
     criteriaFilter(lines,accum);
 
     KF.predict();
-    filtered_measure=KF.correct(last_measure);
-    Vec2f param;
-    coordinateConv(filtered_measure,param);
-    return param;
+    Mat KF_output=KF.correct(last_measure);
+    coordinateConv(KF_output);
+    return filtered_measure;
 }
 
 void streetEdge::DetectEdges()
@@ -130,7 +109,7 @@ void streetEdge::DetectEdges()
 	GaussianBlur(gray_img, gray_img, Size(5,5), 3.5, 3.5);
 	filter2D(gray_img,gray_img,-1,kernel,Point(-1,-1));
 		//future improve, blurring and derivation together
-	threshold(gray_img, gray_img,thresholdS, 255,THRESH_BINARY);
+	threshold(gray_img, gray_img,thresholdEdge, 255,THRESH_BINARY);
 }
 
 void streetEdge::myHoughLines( const Mat &img,vector<Vec2f> &lines,vector<int> &weights,
@@ -171,7 +150,7 @@ void streetEdge::myHoughLines( const Mat &img,vector<Vec2f> &lines,vector<int> &
         tabCos[n] = (float)(cos((double)ang) * irho);
     }
 
-    // stage 1. fill accumulator	//modificar para adaptar a criterio
+    // stage 1. fill accumulator y could change lower and upper limit depending on the previous edge and some criteria
     for( i = 0; i < height; i++ )
         for( j = 0; j < width; j++ )
         {
@@ -213,10 +192,8 @@ void streetEdge::myHoughLines( const Mat &img,vector<Vec2f> &lines,vector<int> &
 }
 
 void streetEdge::kalmanConfig(void){
-    //KF.init(4,2);
-    //Vec2f state;
-    // intialization of KF...
-    KF.transitionMatrix = (Mat_<float>(4, 4) << 1,0,1,0,   0,1,0,1,  0,0,.2,0,  0,0,0,.5);
+    // Initialization of KF...
+    KF.transitionMatrix = (Mat_<float>(4, 4) << 1,0,1,0,   0,1,0,1,  0,0,.3,0,  0,0,0,.7);
     //Mat_<float> measurement(2,1); measurement.setTo(Scalar(0));
 
     KF.statePre.at<float>(0) = last_measure.at<float>(0);   //rho
@@ -276,10 +253,9 @@ void streetEdge::criteriaFilter(vector<Vec2f> &lines,vector<int> &accum){
 }
 
 
-Vec2f streetEdge::coordinateConv(Mat &bestGuess,Vec2f& param){
+void streetEdge::coordinateConv(Mat &bestGuess){
 	int k=street_side?-1:1;
-    param[1]=k*cos(bestGuess.at<float>(1))/sin(bestGuess.at<float>(1));
-    param[0]= bestGuess.at<float>(0)/sin(bestGuess.at<float>(1));
-    return param;
+	filtered_measure=Vec2f(bestGuess.at<float>(0)/sin(bestGuess.at<float>(1)) ,
+					k*cos(bestGuess.at<float>(1))/sin(bestGuess.at<float>(1)) );
 }
 

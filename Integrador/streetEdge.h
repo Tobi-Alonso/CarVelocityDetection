@@ -28,9 +28,14 @@ using namespace cv;
   #define  RHO_MAX  	((float)150)
 
 //Hough transform parameters
-#define  NUM_LINES 				((int)50)
-#define  RHO_RESULUTION 	((float)1)
-#define  THETA_RESULUTION ((float)CV_PI/180)
+	#define  NUM_LINES 				((int)50)
+	#define  RHO_RESULUTION 	((float)1)
+	#define  THETA_RESULUTION ((float)CV_PI/180)
+	#define HT_THRESHOLD 		((int)400)
+
+//edge detecting parameters
+	#define EDGE_THRESHOLD 	((unsigned char)120)
+
 //#define  REDUCTION 			((double)0.5)
 
 
@@ -38,14 +43,14 @@ class streetEdge
 {
 	private:
 		Mat last_measure;		//last measure of real street edge
-		Mat filtered_measure;
+		Vec2f filtered_measure;
 		Mat kernel;				//gradient kernel
 		Mat gray_img; 			//part of the gray frame used to get the edges
 		vector<Vec2f> lines;	//vector used to store detected lines
 		vector<int> accum;		//vector to store the score of the detected lines
 
 		int thresholdH;
-		unsigned char thresholdS;
+		unsigned char thresholdEdge;
 		bool street_side;				//false for left side, true for right side
 		KalmanFilter KF;
 
@@ -60,18 +65,20 @@ class streetEdge
 
 
 
-		// SetThings
 		void kalmanConfig(void);
-		Vec2f coordinateConv(Mat&,Vec2f&);
+		void coordinateConv(Mat&);
 
 
 	public:
 		// Constructores
-		streetEdge(void);
-		streetEdge(int,unsigned char ,bool);
+		streetEdge(bool side,int TH_thres=HT_THRESHOLD, unsigned char TE_thres=EDGE_THRESHOLD,int num_lines=NUM_LINES);
 
+		//gets
 		Vec2f GetEdge(const Mat&);
+		inline Vec2f GetEdge(){return filtered_measure;}
 		inline bool GetSide(){ return street_side;}
+
+		//set
 		void SetThresholdHS(int,int);
 
 	};
