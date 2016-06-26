@@ -167,9 +167,7 @@ class FeaturesFlow3D : public FeaturesFlow<T2D> {
 		//sets
 			void Setspeed_3D(vector<Point3_<T3D> > speed){ speed_3D = speed;}
 			void Setnext_3D(vector<Point3_<T3D> > Next){next_3D = Next;}
-			void GetPrev3D(vector<Point3_<T3D> >& prev_3D){for(unsigned int i=0;i<speed_3D.size();i++)
-																									prev_3D.push_back(speed_3D[i]+next_3D[i]);
-			}
+			void GetPrev3D(vector<Point3_<T3D> >& prev_3D);
 			inline void SetSpeedMeasure(Point3_<T3D>  _measure){speed_measure=_measure;}
 
 		//gets
@@ -188,25 +186,7 @@ class FeaturesFlow3D : public FeaturesFlow<T2D> {
 
 };
 
-/*template <typename T2D , typename T3D> void  FeaturesFlow3D<T2D ,T3D>::Setspeed_3D(vector<Point3_<T3D> > speed)
-{
-	speed_3D = speed;
-}
 
-template <typename T2D , typename T3D> void  FeaturesFlow3D<T2D,T3D>::Setnext_3D(vector<Point3_<T3D> > Next)
-{
-	next_3D = Next;
-}
-
-template <typename T2D , typename T3D> void  FeaturesFlow3D<T2D,T3D>::GetPrev3D(vector<Point3_<T3D> >& prev_3D )
-{
-	for(unsigned int i=0;i<speed_3D.size();i++)
-	{
-		prev_3D.push_back(speed_3D[i]+next_3D[i]);
-	}
-	return Prev;
-}
-*/
 
 
 

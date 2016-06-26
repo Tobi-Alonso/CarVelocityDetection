@@ -72,7 +72,10 @@ template <typename T> FeaturesFlow<T>::FeaturesFlow(vector<Point_<T> >& Previous
 	next_3D.reserve(MaxElements);
 }*/
 
-
+template <typename T3D , typename T2D> void  FeaturesFlow3D <T3D ,T2D>::GetPrev3D(vector<Point3_<T3D> >& prev_3D ){
+	for(unsigned int i=0;i<speed_3D.size();i++)
+		prev_3D.push_back(speed_3D[i]+next_3D[i]);
+}
 
 
 
