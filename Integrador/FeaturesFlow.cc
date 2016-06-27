@@ -19,16 +19,16 @@
 }*/
 
 
-template <typename T> FeaturesFlow<T>::FeaturesFlow(vector<Point_<T> >& Previous, vector<Point_<T> >& _next, vector<T>& error, size_t time)
+FeaturesFlow::FeaturesFlow(vector<Point_<Precision2D> >& Previous, vector<Point_<Precision2D> >& _next, vector<Precision2D>& error, size_t time)
 :	timeNext(time){
-	//profe conviene haber llamado al contructor vector<T> v(size_type n); antes, de la sig forma: por ej
+	//profe conviene haber llamado al contructor vector<Precision2D> v(size_type n); antes, de la sig forma: por ej
 	//Prev(Previous.size);		???
 	Prev=Previous;
 	Next=_next;
 	MatchError=error;
 
 }
-template <typename T>  FeaturesFlow<T>::FeaturesFlow(vector<Point_<T> >& Previous, vector<Point_<T> >& _next, vector<T>& error, size_t time,
+ FeaturesFlow::FeaturesFlow(vector<Point_<Precision2D> >& Previous, vector<Point_<Precision2D> >& _next, vector<Precision2D>& error, size_t time,
 															vector<uchar>& features_found):	timeNext(time)
 {
 	for (unsigned int i=0;i<Previous.size();i++)
@@ -43,8 +43,8 @@ template <typename T>  FeaturesFlow<T>::FeaturesFlow(vector<Point_<T> >& Previou
 	}
 
 }
-template <typename T> FeaturesFlow<T>::FeaturesFlow(vector<Point_<T> >& Previous, vector<Point_<T> >& _next, vector<T>& error, size_t time,
-							vector<uchar>& features_found,T max_match_error):	timeNext(time)
+FeaturesFlow::FeaturesFlow(vector<Point_<Precision2D> >& Previous, vector<Point_<Precision2D> >& _next, vector<Precision2D>& error, size_t time,
+							vector<uchar>& features_found,Precision2D max_match_error):	timeNext(time)
 {
 	for (unsigned int i=0;i<Previous.size();i++)
 	{
@@ -71,11 +71,6 @@ template <typename T> FeaturesFlow<T>::FeaturesFlow(vector<Point_<T> >& Previous
 	speed_3D.reserve(MaxElements);
 	next_3D.reserve(MaxElements);
 }*/
-
-template <typename T3D , typename T2D> void  FeaturesFlow3D <T3D ,T2D>::GetPrev3D(vector<Point3_<T3D> >& prev_3D ){
-	for(unsigned int i=0;i<speed_3D.size();i++)
-		prev_3D.push_back(speed_3D[i]+next_3D[i]);
-}
 
 
 
