@@ -36,8 +36,8 @@ int main(int, char**)
     if(!cap.isOpened())  // check if we succeeded
             return -2;
 
-  //window declarations
-      namedWindow("video",2);
+
+  namedWindow("video",2); //window declaration for video
 
   //program flags
     bool loop=true;
@@ -51,20 +51,22 @@ int main(int, char**)
 
   //get first frame to start process
     Mat frame;
-    cap>>frame;
+    if(!(cap.read(frame)))
+    	loop=false;// no video, end process
 
   //instantiation of CarSpeed
     CarSpeed car_speed(frame,HEIGHT_CAM,F_CAM,FPS,MAX_ST_SPEED/3.6 ,MAX_NUM_FEATURES,X_WALL,
     		HT_THRESHOLD,EDGE_THRESHOLD,MAX_MATCH_ERROR);
 
+   vector<StreetFeaturesFlow> features;
 
-  vector<StreetFeaturesFlow> features;
 
-  for(size_t now=0;loop;now++)
+  for(;loop;)
   {
     for (int i = 0; i < FPS_DIV-1; ++i) cap.grab();//FPS division
 
-    cap >> frame;  // get a new frame from camera
+    if (!(cap.read(frame))) // get a new frame from camera
+        break;// end of the video
 
     float Speed =3.6*car_speed.GetStreetSpeed(frame); // get speed in km/hr
 
@@ -73,10 +75,9 @@ int main(int, char**)
 
     // show results
 			if(draw){
-				vector<Point2f>* prev_ptr=features.back().GetPrevPtr();
-				vector<Point2f>* next_ptr=features.back().GetNextPtr();
-				Vec2f right_edge_param=car_speed.GetRightEdge();
-				Vec2f left_edge_param=car_speed.GetLeftEdge();
+				//get features coordenates
+					vector<Point2f>* prev_ptr=features.back().GetPrevPtr();
+					vector<Point2f>* next_ptr=features.back().GetNextPtr();
 
 				//draw features detected
 				for( unsigned int i=0; i < (*prev_ptr).size(); i++ ){
@@ -87,12 +88,17 @@ int main(int, char**)
 						line(frame, pi, pf, Scalar(0,50,255),2,8,0);
 
 				}
-				//print left edge
+
+				//get edge parameters
+					Vec2f right_edge_param=car_speed.GetRightEdge();
+					Vec2f left_edge_param=car_speed.GetLeftEdge();
+
+				//draw left edge
 					Point l1(frame.cols/2,left_edge_param[0] +frame.rows/2);
 					Point l2(0,left_edge_param[0]-frame.cols/2*left_edge_param[1]+frame.rows/2);
 					line(frame, l1, l2, Scalar(200,100,0),2,8,0);
 
-				//print right_edge_param
+				//draw right_edge_param
 					Point r1(frame.cols/2,right_edge_param[0]+frame.rows/2 );
 					Point r2(frame.cols-1,right_edge_param[0]+frame.cols/2*right_edge_param[1]+frame.rows/2);
 					line(frame, r1, r2, Scalar(100,200,0),2,8,0);
@@ -106,7 +112,6 @@ int main(int, char**)
 
 				std::ostringstream text;
 				text<<"Speed :"<<intSpeed<<','<<FracSpeed<<"km/hr";
-				//rectangle(frame,Point(frame.cols/2-470,120),Point(frame.cols/2+470,10),Scalar(255,255,255),CV_FILLED,8,0);
 				putText(frame,text.str(),Point(frame.cols/2-470,10+100),FONT_HERSHEY_SIMPLEX,3,Scalar(255,185,10),15,CV_AA,false);
 				putText(frame,text.str(),Point(frame.cols/2-470,10+100),FONT_HERSHEY_SIMPLEX,3,Scalar(0,0,0),4,CV_AA,false);
 
@@ -132,10 +137,21 @@ int main(int, char**)
   }
   // the camera will be deinitialized automatically in VideoCapture destructor
 
+  Mat last_frame= Mat::ones(1080,1940,CV_8U)*255;
+	string header="Project develop by:";
+	string tobi="Alonso, Tobias";
+	string and_char="&";
+	string eze="Flores, Ezequiel";
+  putText(last_frame,header,Point(last_frame.cols/2-420,110),FONT_HERSHEY_SIMPLEX,3,Scalar(0,0,0),4,CV_AA,false);
+  putText(last_frame,tobi,Point(last_frame.cols/2-300,310),FONT_HERSHEY_SIMPLEX,3,Scalar(0,0,0),4,CV_AA,false);
+  putText(last_frame,and_char,Point(last_frame.cols/2-5,450),FONT_HERSHEY_SIMPLEX,3,Scalar(0,0,0),4,CV_AA,false);
+  putText(last_frame,eze,Point(last_frame.cols/2-330,590),FONT_HERSHEY_SIMPLEX,3,Scalar(0,0,0),4,CV_AA,false);
+  imshow("video",last_frame);
+  cout<<"end , press a key to close the program"<<endl;
+  waitKey();
 
 
-
-  //ordenar, mandar a file
+  //store in file, sort, get from file
 
   return 0;
 }
