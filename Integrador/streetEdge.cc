@@ -51,7 +51,7 @@
 
 
 //full constructor
-streetEdge::streetEdge(bool side,int TH_thres, unsigned char TE_thres,int num_lines):
+streetEdge::streetEdge(bool side,int TH_thres, int TE_thres,int num_lines):
 filtered_measure(0,CV_PI*3/4),
 gray_img(1,1,CV_8U),
 lines(num_lines),
@@ -67,7 +67,7 @@ KF(4,2)
 								1, 1, 1, 0,-1,
 								1, 1, 1, 1, 0);
 
-    last_measure=(Mat_<float>(2,1)<< 0,CV_PI*3/4);
+    last_measure=(Mat_<edge_p>(2,1)<< 0,CV_PI*3/4);
     kalmanConfig();
 }
 
@@ -79,7 +79,7 @@ void streetEdge::SetThresholdHS(int TH,int TS)
 }
 
 
-Vec2f streetEdge::GetEdge(const Mat &frame){
+edge_t streetEdge::GetEdge(const Mat &frame){
 	Clear();
 
 	if (street_side){//Right side
@@ -112,19 +112,19 @@ void streetEdge::DetectEdges()
 	threshold(gray_img, gray_img,thresholdEdge, 255,THRESH_BINARY);
 }
 
-void streetEdge::myHoughLines( const Mat &img,vector<Vec2f> &lines,vector<int> &weights,
-    float rho, float theta, int threshold,int linesMax )
+void streetEdge::myHoughLines( const Mat &img,vector<edge_t> &lines,vector<int> &weights,
+    edge_p rho, edge_p theta, int threshold,int linesMax )
 {
 	cv::AutoBuffer<int> _accum, _sort_buf;
-    cv::AutoBuffer<float> _tabSin, _tabCos;
+  cv::AutoBuffer<edge_p> _tabSin, _tabCos;
 
-    const uchar* image;
-    int step, width, height;
+  const uchar* image;
+  int step, width, height;
 	int numangle, numrho;
 	int total = 0;
 	int i, j;
-	float irho = 1 / rho;
-    double scale;
+	edge_p irho = 1 / rho;
+  double scale;
 
 	//CV_Assert( CV_IS_MAT(img) && CV_MAT_TYPE(img.type) == CV_8UC1 );
     image = img.data;
@@ -139,15 +139,15 @@ void streetEdge::myHoughLines( const Mat &img,vector<Vec2f> &lines,vector<int> &
     _tabSin.allocate(numangle);
     _tabCos.allocate(numangle);
     int *accum = _accum, *sort_buf = _sort_buf;
-    float *tabSin = _tabSin, *tabCos = _tabCos;
+    edge_p *tabSin = _tabSin, *tabCos = _tabCos;
 
     memset( accum, 0, sizeof(accum[0]) * (numangle+2) * (numrho+2) );
 
-	float ang = 0;
+	edge_p ang = 0;
     for(int n = 0; n < numangle; ang += theta, n++ )
     {
-        tabSin[n] = (float)(sin((double)ang) * irho);
-        tabCos[n] = (float)(cos((double)ang) * irho);
+        tabSin[n] = (edge_p)(sin((double)ang) * irho);
+        tabCos[n] = (edge_p)(cos((double)ang) * irho);
     }
 
     // stage 1. fill accumulator y could change lower and upper limit depending on the previous edge and some criteria
@@ -180,7 +180,7 @@ void streetEdge::myHoughLines( const Mat &img,vector<Vec2f> &lines,vector<int> &
     scale = 1./(numrho+2);
     for( i = 0; i < linesMax; i++ )
     {
-    	Vec2f line;
+    	edge_t line;
         int idx = sort_buf[i];
         int n = cvFloor(idx*scale) - 1;
         int r = idx - (n+1)*(numrho+2) - 1;
@@ -193,11 +193,11 @@ void streetEdge::myHoughLines( const Mat &img,vector<Vec2f> &lines,vector<int> &
 
 void streetEdge::kalmanConfig(void){
     // Initialization of KF...
-    KF.transitionMatrix = (Mat_<float>(4, 4) << 1,0,1,0,   0,1,0,1,  0,0,.3,0,  0,0,0,.7);
-    //Mat_<float> measurement(2,1); measurement.setTo(Scalar(0));
+    KF.transitionMatrix = (Mat_<edge_p>(4, 4) << 1,0,1,0,   0,1,0,1,  0,0,.3,0,  0,0,0,.7);
+    //Mat_<edge_p> measurement(2,1); measurement.setTo(Scalar(0));
 
-    KF.statePre.at<float>(0) = last_measure.at<float>(0);   //rho
-    KF.statePre.at<float>(1) = last_measure.at<float>(1);    //theta
+    KF.statePre.at<edge_p>(0) = last_measure.at<edge_p>(0);   //rho
+    KF.statePre.at<edge_p>(1) = last_measure.at<edge_p>(1);    //theta
 
     setIdentity(KF.measurementMatrix,Scalar::all(1));
     setIdentity(KF.processNoiseCov, Scalar::all(1e-4));
@@ -205,17 +205,17 @@ void streetEdge::kalmanConfig(void){
     setIdentity(KF.errorCovPost, Scalar::all(.1));
 }
 
-void streetEdge::criteriaFilter(vector<Vec2f> &lines,vector<int> &accum){
+void streetEdge::criteriaFilter(vector<edge_t> &lines,vector<int> &accum){
 
-    float theta_max_detected=0;
+    edge_p theta_max_detected=0;
 
-        vector<Vec2f>::iterator ll=lines.begin();
+        vector<edge_t>::iterator ll=lines.begin();
         vector<int>::iterator   aa=accum.begin();
 
         size_t num_lines=lines.size();
 
         for( size_t i = 0; i < num_lines && ll!=lines.end(); i++ ) {  //eliminar lineas que no cumplen con especificaciones
-            float rho =(*ll)[0] , theta = (*ll)[1];
+            edge_p rho =(*ll)[0] , theta = (*ll)[1];
 
             if(theta> THETA_MIN && theta < THETA_MAX && abs(rho)< RHO_MAX){//no tiene que ser muy horizontal, ni estara en x<1(muy vertical) y tiene que tender a pasar por el centro de la imagen
                 ll++;
@@ -232,11 +232,11 @@ void streetEdge::criteriaFilter(vector<Vec2f> &lines,vector<int> &accum){
         case 0:
             break;
         case 1:
-        	last_measure=(Mat_<float>(2,1)<<	lines[0][0],lines[0][1]);
+        	last_measure=(Mat_<edge_p>(2,1)<<	lines[0][0],lines[0][1]);
             break;
         default:
             //average of the closest lines to the car in a range of 50cm
-            float ac_rho=0,ac_theta=0;
+            edge_p ac_rho=0,ac_theta=0;
             int acc_acc=0;
             for( size_t i = 0; i < lines.size(); i++ ) {
                 if(lines[i][1]>(.80925*theta_max_detected+.32435)){  //aprox. of theta(x+.5)| x(thetamax_detected)
@@ -247,7 +247,7 @@ void streetEdge::criteriaFilter(vector<Vec2f> &lines,vector<int> &accum){
 
             }
 
-            last_measure=(Mat_<float>(2,1)<<ac_rho/acc_acc,ac_theta/acc_acc);
+            last_measure=(Mat_<edge_p>(2,1)<<ac_rho/acc_acc,ac_theta/acc_acc);
     }
 
 }
@@ -255,7 +255,7 @@ void streetEdge::criteriaFilter(vector<Vec2f> &lines,vector<int> &accum){
 
 void streetEdge::coordinateConv(Mat &bestGuess){
 	int k=street_side?-1:1;
-	filtered_measure=Vec2f(bestGuess.at<float>(0)/sin(bestGuess.at<float>(1)) ,
-					k*cos(bestGuess.at<float>(1))/sin(bestGuess.at<float>(1)) );
+	filtered_measure=edge_t(bestGuess.at<edge_p>(0)/sin(bestGuess.at<edge_p>(1)) ,
+					k*cos(bestGuess.at<edge_p>(1))/sin(bestGuess.at<edge_p>(1)) );
 }
 
