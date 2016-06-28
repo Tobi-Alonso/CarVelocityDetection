@@ -47,7 +47,7 @@ CarSpeed::CarSpeed(const Mat& frame, Feature3D_p _y_floor,Feature3D_p _f_camara,
 	street_features.SetFrameSize(frame.rows,frame.cols);
 	//get a mask for the street
 	GetStreetMask(frame);
-	cvtColor(frame,old_gray_frame,CV_BGR2GRAY);
+	cvtColor(frame(Range(frame.rows/2,frame.rows),Range::all()),old_gray_frame,CV_BGR2GRAY);
 	kalmanConfig();
 }
 
@@ -93,17 +93,19 @@ Feature3D_p CarSpeed::GetStreetSpeed(const Mat& frame){
 		aux_status.clear(); //necesario?
 
 	//get the intensity channel
-	  cvtColor(frame,gray_frame,CV_BGR2GRAY);
+	  cvtColor(frame(Range(frame.rows/2,frame.rows),Range::all()),gray_frame,CV_BGR2GRAY);
 
+	  Mat aux;
+	  cvtColor(frame,aux,CV_BGR2GRAY);
 	//get the street edges from the gray frame 
-	  Vec2f left_edge_param=left_edge.GetEdge(gray_frame);
-	  Vec2f right_edge_param=right_edge.GetEdge(gray_frame);
+	  Vec2f left_edge_param=left_edge.GetEdge(aux);
+	  Vec2f right_edge_param=right_edge.GetEdge(aux);
 
 	//get easily trackable points with goodFeaturesToTrack
 
 		vector<ImgPoint_t>* prev_ptr=street_features.GetPrevPtr();
 
-		goodFeaturesToTrack( old_gray_frame,*prev_ptr,max_num_features,QUALITY_LEVEL,MIN_DISTANCE ,street_mask,BLOCK_SIZE,false,K_HARRIS);
+		goodFeaturesToTrack( old_gray_frame,*prev_ptr,max_num_features,QUALITY_LEVEL,MIN_DISTANCE ,Mat(),BLOCK_SIZE,false,K_HARRIS);
 		
 	// track them in the next frame with calcOpticalFlowPyrLK
 
@@ -113,10 +115,13 @@ Feature3D_p CarSpeed::GetStreetSpeed(const Mat& frame){
 		calcOpticalFlowPyrLK( old_gray_frame, gray_frame, *prev_ptr, *next_ptr, aux_status, *error_ptr ,
 		                     Size( WIN_SIZE, WIN_SIZE ), 5, cvTermCriteria( CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 20, 0.3 ), 0 );
 
+
+
 	//Filter bad points and calculate velocity based on ours hypothesis
 
 		if(street_features.FeaturesFlow::FilterPts(MAX_MATCH_ERROR,aux_status)){
 			//if we get new good measurements,last_street_measure is update
+			street_features.YCoordCorrect();
 			street_features.CalZparam(left_edge_param,right_edge_param);
 
 			//Get a 30-70 average, 30th is -MAX_ST_SPEED or more and 70th is MAX_ST_SPEED or less

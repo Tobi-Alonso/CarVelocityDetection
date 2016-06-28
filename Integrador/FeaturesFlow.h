@@ -267,6 +267,12 @@ class StreetFeaturesFlow: public FeaturesFlow3D
 		//set
 			inline void SetReliability(vector<Feature3D_p> v){reliability=v;}
 			inline void SetFrameSize(int rows,int cols){frame_rows=rows;frame_cols=cols;}
+			void YCoordCorrect(){
+				for(int i=0;i<Prev.size();i++){
+					Prev[i].y+=frame_rows/2;
+					Next[i].y+=frame_rows/2;
+				}
+			}
 
 		//gets
 
