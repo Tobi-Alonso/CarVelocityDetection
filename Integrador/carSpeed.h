@@ -40,12 +40,12 @@ class CarSpeed{
 		streetEdge right_edge;
 
 	//street speed
-		float K_ST_SPEED;
-		float MAX_ST_SPEED;
+		Feature3D_p K_ST_SPEED;
+		Feature3D_p MAX_ST_SPEED;
 		Mat street_mask;
 		Mat last_street_measure;
 		Mat last_street_speed;
-		const float MAX_MATCH_ERROR;
+		const Feature3D_p MAX_MATCH_ERROR;
 
 		KalmanFilter street_speed_KF;
 		const size_t max_num_features;
@@ -54,12 +54,12 @@ class CarSpeed{
 
 	//private methods
 		void GetStreetMask(const Mat&);
-		float RangeAverage(float ,float );
+		Feature3D_p RangeAverage(Feature3D_p ,Feature3D_p );
 		void kalmanConfig(void);
 	public:
 		//constructor
-			CarSpeed(const Mat& frame, float _y_floor,float _f_camara,float _FPS, float _MAX_ST_SPEED=150, int _max_num_features=100,
-					float _x_wall=2,int HT_threshold=400, unsigned char Edge_threshold=120,float max_match_error=10.0);
+			CarSpeed(const Mat& frame, Feature3D_p _y_floor,Feature3D_p _f_camara,float _FPS, Feature3D_p _MAX_ST_SPEED=150, int _max_num_features=100,
+					Feature3D_p _x_wall=2,int HT_threshold=400, int Edge_threshold=120,Feature2D_p max_match_error=10.0);
 
 		//destructor
 		~CarSpeed(){}
@@ -67,18 +67,18 @@ class CarSpeed{
 		//gets
 			//StreetFeaturesFlow* GetStreetFeaturesPtr(){return &street_features;}
 				inline void GetStreetFeatures(vector<StreetFeaturesFlow>& v){v.push_back(street_features);}
-				inline float GetLastStMeasure(){return last_street_measure.at<float>(0)*K_ST_SPEED;}
-				inline Vec2f GetRightEdge(){Vec2f edge=right_edge.GetEdge();return edge;}
-				inline Vec2f GetLeftEdge(){return left_edge.GetEdge();}
+				inline Feature3D_p GetLastStMeasure(){return last_street_measure.at<Feature3D_p>(0)*K_ST_SPEED;}
+				inline edge_t GetRightEdge(){edge_t edge=right_edge.GetEdge();return edge;}
+				inline edge_t GetLeftEdge(){return left_edge.GetEdge();}
 
 		//Method to get the speed of the car relative to the floor
 			//just z
-				float GetStreetSpeed(const Mat& frame);
-				float GetStreetSpeed(const Mat& frame ,float FPS);
+				Feature3D_p GetStreetSpeed(const Mat& frame);
+				Feature3D_p GetStreetSpeed(const Mat& frame ,float FPS);
 
 			//full3d
-				//float GetStreetSpeed(const Mat& frame,float y_floor,float f_camara );
-				//float GetStreetSpeed(const Mat& frame ,size_t time_now,float y_floor,float f_camara );
+				//Feature3D_p GetStreetSpeed(const Mat& frame,Feature3D_p y_floor,Feature3D_p f_camara );
+				//Feature3D_p GetStreetSpeed(const Mat& frame ,size_t time_now,Feature3D_p y_floor,Feature3D_p f_camara );
 
 
 };

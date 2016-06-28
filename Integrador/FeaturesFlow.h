@@ -18,27 +18,31 @@
 using namespace cv;
 using namespace std;
 
-#define Precision2D float
-#define Precision3D	float
+#define Feature2D_p float //just float for now
+#define Feature3D_p	float //float or double
+
 
 //######################################################################################################
 //################################---------FeaturesFlow Class---------################################
 //######################################################################################################
 
+
+#define ImgPoint_t Point_<Feature2D_p>
+
 class FeaturesFlow
 {
 	protected:
-	vector<Point_<Precision2D> > Prev;
-	vector<Point_<Precision2D> > Next;
-	vector<Precision2D> MatchError;
+	vector<ImgPoint_t > Prev;
+	vector<ImgPoint_t > Next;
+	vector<Feature2D_p> MatchError;
 	size_t timeNext;
 
 	public:
 		//constructors
 			FeaturesFlow(int MaxElements,size_t _time=0):Prev(MaxElements),Next(MaxElements),MatchError(MaxElements),timeNext(_time){}
-			FeaturesFlow(vector<Point_<Precision2D> >& , vector<Point_<Precision2D> >& , vector<Precision2D>& , size_t);
-			FeaturesFlow(vector<Point_<Precision2D> >& , vector<Point_<Precision2D> >& , vector<Precision2D>& , size_t, vector<uchar>&);
-			FeaturesFlow(vector<Point_<Precision2D> >& , vector<Point_<Precision2D> >& , vector<Precision2D>& , size_t, vector<uchar>&,Precision2D);
+			FeaturesFlow(vector<ImgPoint_t >& , vector<ImgPoint_t >& , vector<Feature2D_p>& , size_t);
+			FeaturesFlow(vector<ImgPoint_t >& , vector<ImgPoint_t >& , vector<Feature2D_p>& , size_t, vector<uchar>&);
+			FeaturesFlow(vector<ImgPoint_t >& , vector<ImgPoint_t >& , vector<Feature2D_p>& , size_t, vector<uchar>&,Feature2D_p);
 
 		//Destructor
 			virtual ~FeaturesFlow(){}
@@ -50,19 +54,19 @@ class FeaturesFlow
 
 		//gets
 			inline size_t GetTimeNext(){return timeNext;}
-			inline vector<Point_<Precision2D> >* GetPrevPtr(){return &Prev;}
-			inline vector<Point_<Precision2D> >* GetNextPtr(){return &Next;}
-			inline vector<Precision2D>* GetMatchErrorPtr(){return &MatchError;}
+			inline vector<ImgPoint_t >* GetPrevPtr(){return &Prev;}
+			inline vector<ImgPoint_t >* GetNextPtr(){return &Next;}
+			inline vector<Feature2D_p>* GetMatchErrorPtr(){return &MatchError;}
 			inline virtual size_t GetNumOfFeatures(){return Prev.size();}
 
 
 		//virtual
 			inline virtual void Clear(){Prev.clear(); Next.clear(); MatchError.clear();}
 
-			virtual bool FilterPts(Precision2D max_error){
-				vector<Point_<Precision2D> >::iterator pp=Prev.begin();
-				vector<Point_<Precision2D> >::iterator nn=Next.begin();
-				vector<Precision2D>::iterator ee=MatchError.begin();
+			virtual bool FilterPts(Feature2D_p max_error){
+				vector<ImgPoint_t >::iterator pp=Prev.begin();
+				vector<ImgPoint_t >::iterator nn=Next.begin();
+				vector<Feature2D_p>::iterator ee=MatchError.begin();
 				size_t vec_size=Prev.size();
 
 				for (size_t i = 0; i < vec_size; ++i){
@@ -84,9 +88,9 @@ class FeaturesFlow
 			}
 
 			virtual bool FilterPts(vector<uchar>& status){
-				vector<Point_<Precision2D> >::iterator pp=Prev.begin();
-				vector<Point_<Precision2D> >::iterator nn=Next.begin();
-				vector<Precision2D>::iterator ee=MatchError.begin();
+				vector<ImgPoint_t >::iterator pp=Prev.begin();
+				vector<ImgPoint_t >::iterator nn=Next.begin();
+				vector<Feature2D_p>::iterator ee=MatchError.begin();
 				size_t vec_size=Prev.size();
 
 				for (size_t i = 0; i < vec_size; ++i){
@@ -107,10 +111,10 @@ class FeaturesFlow
 					return true;
 			}
 
-			virtual bool FilterPts(Precision2D max_error,vector<uchar>& status){
-				vector<Point_<Precision2D> >::iterator pp=Prev.begin();
-				vector<Point_<Precision2D> >::iterator nn=Next.begin();
-				vector<Precision2D>::iterator ee=MatchError.begin();
+			virtual bool FilterPts(Feature2D_p max_error,vector<uchar>& status){
+				vector<ImgPoint_t >::iterator pp=Prev.begin();
+				vector<ImgPoint_t >::iterator nn=Next.begin();
+				vector<Feature2D_p>::iterator ee=MatchError.begin();
 				size_t vec_size=Prev.size();
 
 				for (size_t i = 0; i < vec_size; ++i){
@@ -142,55 +146,52 @@ class FeaturesFlow
 //################################---------FeaturesFlow3D Class---------################################
 //######################################################################################################
 
+#define SpacePoint_t Point3_<Feature3D_p>
+
 class FeaturesFlow3D : public FeaturesFlow {
 
 	protected:
-		vector<Point3_<Precision3D> > speed_3D;
-		vector<Point3_<Precision3D> > next_3D;
-		Point3_<Precision3D>  	speed_measure;
+		vector<SpacePoint_t> speed_3D;
+		vector<SpacePoint_t> next_3D;
+		SpacePoint_t 	speed_measure;
 
 	public:
 		//constructors
 			FeaturesFlow3D(int MaxElements):FeaturesFlow(MaxElements),speed_3D(MaxElements),next_3D(MaxElements){}
-			FeaturesFlow3D(vector<Point3_<Precision3D> >& speed,vector<Point3_<Precision3D> >& next3d, vector<Point_<Precision2D> >& previous, vector<Point_<Precision2D> >& next,
-								vector<Precision2D>& error, size_t time) :FeaturesFlow(previous , next , error , time){
+			FeaturesFlow3D(vector<SpacePoint_t>& speed,vector<SpacePoint_t>& next3d, vector<ImgPoint_t >& previous, vector<ImgPoint_t >& next,
+								vector<Feature2D_p>& error, size_t time) :FeaturesFlow(previous , next , error , time){
 				speed_3D = speed; next_3D = next3d;}
 
-			FeaturesFlow3D(vector<Point_<Precision2D> >& previous,vector<Point_<Precision2D> >& next, vector<Precision2D>& error, size_t time)
+			FeaturesFlow3D(vector<ImgPoint_t >& previous,vector<ImgPoint_t >& next, vector<Feature2D_p>& error, size_t time)
 							:FeaturesFlow(previous,next,error,time){}
 
-			FeaturesFlow3D(vector<Point_<Precision2D> >& previous,vector<Point_<Precision2D> >& next, vector<Precision2D>& error, size_t time,vector<uchar>& features_found,Precision2D max_match_error)
+			FeaturesFlow3D(vector<ImgPoint_t >& previous,vector<ImgPoint_t >& next, vector<Feature2D_p>& error, size_t time,vector<uchar>& features_found,Feature2D_p max_match_error)
 								:FeaturesFlow(previous,next,error,time,features_found,max_match_error){}
 
 		//Destructor
 			virtual ~FeaturesFlow3D(){}
 
 		//sets
-			void Setspeed_3D(vector<Point3_<Precision3D> > speed){ speed_3D = speed;}
-			void Setnext_3D(vector<Point3_<Precision3D> > Next){next_3D = Next;}
-			void GetPrev3D(vector<Point3_<Precision3D> >& prev_3D);
-			inline void SetSpeedMeasure(Point3_<Precision3D>  _measure){speed_measure=_measure;}
+			void Setspeed_3D(vector<SpacePoint_t> speed){ speed_3D = speed;}
+			void Setnext_3D(vector<SpacePoint_t> Next){next_3D = Next;}
+			void GetPrev3D(vector<SpacePoint_t>& prev_3D);
+			inline void SetSpeedMeasure(SpacePoint_t _measure){speed_measure=_measure;}
 
 		//gets
-			inline vector<Point3_<Precision3D> > GetSpeedVector(void){ return speed_3D;}
-			inline Point3_<Precision3D>  GetSpeed(int i){return speed_3D[i];}
+			inline vector<SpacePoint_t> GetSpeedVector(void){ return speed_3D;}
+			inline SpacePoint_t GetSpeed(int i){return speed_3D[i];}
 			inline virtual size_t GetNumOfFeatures(){return next_3D.size();}
-			inline vector<Point3_<Precision3D> >* GetSpeed3DPtr(){return &speed_3D;}
-			inline vector<Point3_<Precision3D> >* GetNext3DPtr(){return &next_3D;}
+			inline vector<SpacePoint_t>* GetSpeed3DPtr(){return &speed_3D;}
+			inline vector<SpacePoint_t>* GetNext3DPtr(){return &next_3D;}
 
 		//virtual
-			//virtual bool FilterPts(Precision2D max_error);
+			//virtual bool FilterPts(Feature2D_p max_error);
 			//virtual bool FilterPts(vector<uchar>& status);
-			//virtual bool FilterPts(Precision2D max_error,vector<uchar>& status);
+			//virtual bool FilterPts(Feature2D_p max_error,vector<uchar>& status);
 
 			inline virtual void Clear(){FeaturesFlow::Clear();speed_3D.clear();next_3D.clear();}
 
 };
-
-void  FeaturesFlow3D::GetPrev3D(vector<Point3_<Precision3D> >& prev_3D ){
-	for(unsigned int i=0;i<speed_3D.size();i++)
-		prev_3D.push_back(speed_3D[i]+next_3D[i]);
-}
 
 
 
@@ -201,11 +202,14 @@ void  FeaturesFlow3D::GetPrev3D(vector<Point3_<Precision3D> >& prev_3D ){
 //################################---------StreetFeaturesFlow Class---------################################
 //######################################################################################################
 
+#ifndef edge_t
+#define edge_t Vec<float, 2>
+#endif
 
 class StreetFeaturesFlow: public FeaturesFlow3D
 {
 
-	vector<float> reliability;
+	vector<Feature3D_p> reliability;
 	int frame_rows;
 	int frame_cols;
 
@@ -216,14 +220,14 @@ class StreetFeaturesFlow: public FeaturesFlow3D
 
 	public:
 		//constructors
-			StreetFeaturesFlow(int MaxElements, float _y_floor,float _f_camara, float _x_wall):FeaturesFlow3D(MaxElements),
+			StreetFeaturesFlow(int MaxElements, Feature3D_p _y_floor,Feature3D_p _f_camara, Feature3D_p _x_wall):FeaturesFlow3D(MaxElements),
 										reliability(MaxElements),
 										y_floor(_y_floor),
 										f_camara(_f_camara),
 										x_wall(_x_wall){}
-			StreetFeaturesFlow( vector<Point2f>& previous, vector<Point2f>& next,vector<float>& error, size_t time,
-								Vec2f left_edge_param,Vec2f right_edge_param, int rows, int cols,vector<uchar>& features_found,
-								 float _y_floor,float _f_camara, float _x_wall)
+			StreetFeaturesFlow( vector<ImgPoint_t >& previous, vector<ImgPoint_t >& next,vector<Feature2D_p>& error, size_t time,
+								edge_t left_edge_param,edge_t right_edge_param, int rows, int cols,vector<uchar>& features_found,
+								 Feature3D_p _y_floor,Feature3D_p _f_camara, Feature3D_p _x_wall)
 								:FeaturesFlow3D(previous,next,error,time),
 								frame_rows(rows),
 								frame_cols(cols),
@@ -234,9 +238,9 @@ class StreetFeaturesFlow: public FeaturesFlow3D
 				CalZparam(left_edge_param,right_edge_param);
 			}
 
-			StreetFeaturesFlow( vector<Point2f>& previous, vector<Point2f>& next,vector<float>& error, size_t time,
-										Vec2f left_edge_param,Vec2f right_edge_param, int rows, int cols,vector<uchar>& features_found,
-										float max_match_error,float _y_floor,float _f_camara, float _x_wall)
+			StreetFeaturesFlow( vector<ImgPoint_t >& previous, vector<ImgPoint_t >& next,vector<Feature2D_p>& error, size_t time,
+										edge_t left_edge_param,edge_t right_edge_param, int rows, int cols,vector<uchar>& features_found,
+										Feature2D_p max_match_error,Feature3D_p _y_floor,Feature3D_p _f_camara, Feature3D_p _x_wall)
 										:FeaturesFlow3D(previous,next,error,time,features_found,max_match_error),
 										frame_rows(rows),
 										frame_cols(cols),
@@ -253,26 +257,26 @@ class StreetFeaturesFlow: public FeaturesFlow3D
 
 
 		//function with the geometrical info of the street
-			void Cal3Dparam(Vec2f,Vec2f,int,int);
-			void Cal3Dparam(Vec2f,Vec2f);			
-			void CalZparam(Vec2f,Vec2f,int,int);
-			void CalZparam(Vec2f,Vec2f);
+			void Cal3Dparam(edge_t,edge_t,int,int);
+			void Cal3Dparam(edge_t,edge_t);
+			void CalZparam(edge_t,edge_t,int,int);
+			void CalZparam(edge_t,edge_t);
 
 
 
 		//set
-			inline void SetReliability(vector<float> v){reliability=v;}
+			inline void SetReliability(vector<Feature3D_p> v){reliability=v;}
 			inline void SetFrameSize(int rows,int cols){frame_rows=rows;frame_cols=cols;}
 
 		//gets
 
-			inline vector<float>* GetReliabilityPtr(){return &reliability;}
-			inline float GetReliability(int i){return reliability[i];}
+			inline vector<Feature3D_p>* GetReliabilityPtr(){return &reliability;}
+			inline Feature3D_p GetReliability(int i){return reliability[i];}
 
 		//virtual
-			//virtual bool FilterPts(float max_error);
+			//virtual bool FilterPts(Feature2D_p max_error);
 			//virtual bool FilterPts(vector<uchar>& status);
-			//virtual bool FilterPts(float max_error,vector<uchar>& status);
+			//virtual bool FilterPts(Feature2D_p max_error,vector<uchar>& status);
 
 			inline virtual void Clear(){FeaturesFlow3D::Clear();reliability.clear();}
 
