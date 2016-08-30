@@ -61,11 +61,12 @@ thresholdEdge(TE_thres),
 street_side(side),
 KF(4,2)
 {
+	//set kernel used to get edges with the same direction of the main diagonal
 	kernel=(Mat_<float>(5,5)<< 	0,-1,-1,-1,-1,
-								1, 0,-1,-1,-1,
-								1, 1, 0,-1,-1,
-								1, 1, 1, 0,-1,
-								1, 1, 1, 1, 0);
+															1, 0,-1,-1,-1,
+															1, 1, 0,-1,-1,
+															1, 1, 1, 0,-1,
+															1, 1, 1, 1, 0);
 
     last_measure=(Mat_<edge_p>(2,1)<< 0,CV_PI*3/4);
     kalmanConfig();
@@ -80,8 +81,9 @@ void streetEdge::SetThresholdHS(int TH,int TS)
 
 
 edge_t streetEdge::GetEdge(const Mat &frame){
-	Clear();
+	Clear();	//clear vectors
 
+    /*cut source image and flip if necesary*/
 	if (street_side){//Right side
 		gray_img=frame(Range(frame.rows/2,frame.rows),Range(frame.cols/2,frame.cols)).clone();
 	}else{ //left side
@@ -89,27 +91,24 @@ edge_t streetEdge::GetEdge(const Mat &frame){
 		flip(gray_img,gray_img,1);
 	}
 
-
     DetectEdges();
 
-    //resize(step2,step2,Size(),reduction,reduction,INTER_LINEAR);
+    myHoughLines( gray_img, lines, accum,RHO_RESULUTION, THETA_RESULUTION, thresholdH,NUM_LINES );  //detect lines in src image
+    criteriaFilter(lines,accum);        //filter lines that don't seem to be a street edge
 
-    myHoughLines( gray_img, lines, accum,RHO_RESULUTION, THETA_RESULUTION, thresholdH,NUM_LINES );
-    criteriaFilter(lines,accum);
-
-    KF.predict();
-    Mat KF_output=KF.correct(last_measure);
-    coordinateConv(KF_output);
+    KF.predict();                       
+    Mat KF_output=KF.correct(last_measure);     //filter the measure with a kalman filter
+    coordinateConv(KF_output);                  //get cartesian coordinates
     return filtered_measure;
 }
 
 void streetEdge::DetectEdges()
 {
-	equalizeHist(gray_img,gray_img);
-	GaussianBlur(gray_img, gray_img, Size(5,5), 3.5, 3.5);
-	filter2D(gray_img,gray_img,-1,kernel,Point(-1,-1));
+	equalizeHist(gray_img,gray_img);                           //equalize src img
+	GaussianBlur(gray_img, gray_img, Size(5,5), 3.5, 3.5);     //filter gaussian noise
+	filter2D(gray_img,gray_img,-1,kernel,Point(-1,-1));        //enhance diagonal edges
 		//future improve, blurring and derivation together
-	threshold(gray_img, gray_img,thresholdEdge, 255,THRESH_BINARY);
+	threshold(gray_img, gray_img,thresholdEdge, 255,THRESH_BINARY);    //filter non-edge pixels
 }
 
 void streetEdge::myHoughLines( const Mat &img,vector<edge_t> &lines,vector<int> &weights,
@@ -172,10 +171,8 @@ void streetEdge::myHoughLines( const Mat &img,vector<edge_t> &lines,vector<int> 
                 accum[base] > accum[base - numrho - 2] && accum[base] >= accum[base + numrho + 2] )
                 sort_buf[total++] = base;
         }
-    // stage 3. sort the detected lines by accumulator value
-   // icvHoughSortDescent32s( sort_buf, total, accum );
 
-    // stage 4. store the first min(total,linesMax) lines to the output buffer
+    // stage 3. store the first min(total,linesMax) lines to the output buffer
     linesMax = MIN(linesMax, total);
     scale = 1./(numrho+2);
     for( i = 0; i < linesMax; i++ )
@@ -209,25 +206,35 @@ void streetEdge::criteriaFilter(vector<edge_t> &lines,vector<int> &accum){
 
     edge_p theta_max_detected=0;
 
-        vector<edge_t>::iterator ll=lines.begin();
-        vector<int>::iterator   aa=accum.begin();
+    vector<edge_t>::iterator ll=lines.begin();
+    vector<int>::iterator   aa=accum.begin();
 
-        size_t num_lines=lines.size();
+    size_t num_lines=lines.size();
 
-        for( size_t i = 0; i < num_lines && ll!=lines.end(); i++ ) {  //eliminar lineas que no cumplen con especificaciones
-            edge_p rho =(*ll)[0] , theta = (*ll)[1];
+    /*delete lines that do not match the specifications:
+        * the line can't be to horizontal. This implies a maximun distance of the edge to the car
+        * the line can't be to vertical. This implies a minimun distance of the edge to the car
+        * the must be close to the center of the image. This implies certain level of parallelism of the edge with the car's direction
+    */
+    for( size_t i = 0; i < num_lines && ll!=lines.end(); i++ ) {  
+        edge_p rho =(*ll)[0] , theta = (*ll)[1];
 
-            if(theta> THETA_MIN && theta < THETA_MAX && abs(rho)< RHO_MAX){//no tiene que ser muy horizontal, ni estara en x<1(muy vertical) y tiene que tender a pasar por el centro de la imagen
-                ll++;
-                aa++;
-                if(theta>theta_max_detected) theta_max_detected=theta;
-            }else{	//bad line
-            	ll=lines.erase(ll);
-            	aa=accum.erase(aa);
-            }
+        if(theta> THETA_MIN && theta < THETA_MAX && abs(rho)< RHO_MAX){
+            ll++;
+            aa++;
+            if(theta>theta_max_detected) theta_max_detected=theta;
+        }else{	//bad line
+        	ll=lines.erase(ll);
+        	aa=accum.erase(aa);
         }
+    }
 
-
+    /*get a measure.
+        if the number of detected lines that seem to be edges is:
+            0  : the new measure is equal to the last measure
+            1  : the new measure is equal to this new line
+            1+ : the new measure is equal to a weighted average (based on hough transform accumulator) of the group lines, within 50cm of the closer edge to the car
+    */
     switch(lines.size()){
         case 0:
             break;

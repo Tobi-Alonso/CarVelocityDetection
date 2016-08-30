@@ -9,11 +9,10 @@
 #include  <algorithm> 
 
 void CarSpeed::kalmanConfig(void){
-    //KF.init(2,1);
     // intialization of KF...
 	street_speed_KF.transitionMatrix = (Mat_<Feature3D_p>(2, 2) << 	1,1,
 																0,.75);
-    //Mat_<Feature3D_p> measurement(2,1); measurement.setTo(Scalar(0));
+  Mat_<Feature3D_p> measurement(2,1); measurement.setTo(Scalar(10));
 
 	street_speed_KF.statePre.at<Feature3D_p>(0) = last_street_measure.at<Feature3D_p>(0);
 
@@ -22,41 +21,44 @@ void CarSpeed::kalmanConfig(void){
     //setIdentity(KF.measurementNoiseCov, Scalar::all(10));
     setIdentity(street_speed_KF.errorCovPost, Scalar::all(.1));
 }
+
 void CarSpeed::GetStreetMask(const Mat& frame){//it has frame as argument and not rows and cols due to in the future we can upgrade this method
 										//e.g. we can eliminate the cars on the street
-	street_mask= Mat::ones(frame.size(),CV_8U);
-	Mat aux_mask=street_mask(Range(0,frame.rows/2),Range::all());
-	aux_mask.setTo(0);
+	street_mask= Mat::ones(frame.rows/2,frame.cols,CV_8U);
 	int width=500;
-	rectangle(street_mask,Point(frame.cols/2-width/2,frame.rows/2),Point(frame.cols/2+width/2,frame.rows/2+100),Scalar(0),CV_FILLED,8,0);
+	//mask the vanishing point due to the sensitivity of it's surroundings
+		rectangle(street_mask,Point(frame.cols/2-width/2,0),Point(frame.cols/2+width/2,100),Scalar(0),CV_FILLED,8,0);
 }
 
 CarSpeed::CarSpeed(const Mat& frame, Feature3D_p _y_floor,Feature3D_p _f_camara,float _FPS, Feature3D_p _MAX_ST_SPEED, int _max_num_features,
 				Feature3D_p _x_wall,int HT_threshold, int Edge_threshold,Feature2D_p max_match_error):
-	left_edge(LEFT_SIDE,HT_threshold,Edge_threshold),
-	right_edge(RIGHT_SIDE,HT_threshold,Edge_threshold),
-	K_ST_SPEED(_y_floor*_f_camara*_FPS),
-	MAX_ST_SPEED(_MAX_ST_SPEED),
-	last_street_measure(1,1,0),
-	MAX_MATCH_ERROR(max_match_error),
-	street_speed_KF(2,1),
-	max_num_features(_max_num_features),
-	street_features(_max_num_features,_y_floor,_f_camara,_x_wall),
-	aux_status(_max_num_features)
-{
-	street_features.SetFrameSize(frame.rows,frame.cols);
-	//get a mask for the street
-	GetStreetMask(frame);
-	cvtColor(frame(Range(frame.rows/2,frame.rows),Range::all()),old_gray_frame,CV_BGR2GRAY);
-	kalmanConfig();
+				left_edge(LEFT_SIDE,HT_threshold,Edge_threshold),
+				right_edge(RIGHT_SIDE,HT_threshold,Edge_threshold),
+				K_ST_SPEED(_y_floor*_f_camara*_FPS),
+				MAX_ST_SPEED(_MAX_ST_SPEED),
+				last_street_measure(1,1,0),
+				MAX_MATCH_ERROR(max_match_error),
+				street_speed_KF(2,1),
+				max_num_features(_max_num_features),
+				street_features(_max_num_features,_y_floor,_f_camara,_x_wall),
+				aux_status(_max_num_features)
+	{
+		street_features.SetFrameSize(frame.rows,frame.cols);
+		//get a mask for the street
+		GetStreetMask(frame);
+		cvtColor(frame(Range(frame.rows/2,frame.rows),Range::all()),old_gray_frame,CV_BGR2GRAY);
+		kalmanConfig();
 }
 
 
+// function that returns true if lhs's z coordinate is lower than rhs's
 static bool ZComp(SpacePoint_t lhs,SpacePoint_t rhs){return (lhs.z<rhs.z); }
 
+// function that returns true if lhs's L2 norm is lower than rhs's
 static bool Point3DComp(SpacePoint_t lhs,SpacePoint_t rhs){
 	return ((lhs.x*lhs.x + lhs.y*lhs.y + lhs.z*lhs.z )<(rhs.x*rhs.x + rhs.y*rhs.y + rhs.z*rhs.z )); }
 
+//function that returns the nth lower value of the SpacePoint_t vector
 static SpacePoint_t  nth_value(vector<SpacePoint_t> v,float position, bool full_3d=false)
 {
 		//position is a % of vector size
@@ -70,6 +72,7 @@ static SpacePoint_t  nth_value(vector<SpacePoint_t> v,float position, bool full_
     return v[n];
 }
 
+//method that computes the average of the value between a lower and higher bound
 Feature3D_p CarSpeed::RangeAverage(Feature3D_p lower_speed,Feature3D_p higher_speed){
 	Feature3D_p speed_acc=0;
 	Feature3D_p reliability_acc=0;
@@ -89,23 +92,25 @@ Feature3D_p CarSpeed::RangeAverage(Feature3D_p lower_speed,Feature3D_p higher_sp
 Feature3D_p CarSpeed::GetStreetSpeed(const Mat& frame){
 	//clean old data
 		street_features.Clear();
-		street_features.IncTimeNext();//first features have timNext=1, this is right, since the prevPTs belong to time=0
+		street_features.IncTime();//first features have timNext=1, this is right, since the prevPTs belong to time=0
 		aux_status.clear(); //necesario?
 
 	//get the intensity channel
-	  cvtColor(frame(Range(frame.rows/2,frame.rows),Range::all()),gray_frame,CV_BGR2GRAY);
+	  cvtColor(frame,gray_frame,CV_BGR2GRAY);
 
-	  Mat aux;
-	  cvtColor(frame,aux,CV_BGR2GRAY);
 	//get the street edges from the gray frame 
-	  Vec2f left_edge_param=left_edge.GetEdge(aux);
-	  Vec2f right_edge_param=right_edge.GetEdge(aux);
+	  Vec2f left_edge_param=left_edge.GetEdge(gray_frame);
+	  Vec2f right_edge_param=right_edge.GetEdge(gray_frame);
+
+	  gray_frame=gray_frame(Range(frame.rows/2,frame.rows),Range::all());
 
 	//get easily trackable points with goodFeaturesToTrack
 
 		vector<ImgPoint_t>* prev_ptr=street_features.GetPrevPtr();
 
-		goodFeaturesToTrack( old_gray_frame,*prev_ptr,max_num_features,QUALITY_LEVEL,MIN_DISTANCE ,Mat(),BLOCK_SIZE,false,K_HARRIS);
+
+
+		goodFeaturesToTrack( old_gray_frame,*prev_ptr,max_num_features,QUALITY_LEVEL,MIN_DISTANCE ,street_mask,BLOCK_SIZE,false,K_HARRIS);
 		
 	// track them in the next frame with calcOpticalFlowPyrLK
 

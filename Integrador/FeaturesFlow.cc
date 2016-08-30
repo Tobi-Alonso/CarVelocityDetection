@@ -8,15 +8,8 @@
 
 #include "FeaturesFlow.h"
 //######################################################################################################
-//################################---------FeaturesFlow Methods---------################################
+//################################---------FeaturesFlow Methods definition---------#####################
 //######################################################################################################
-
-
-/*FeaturesFlow::FeaturesFlow(int MaxElements){
-	Prev.reserve(MaxElements);
-	Next.reserve(MaxElements);
-	MatchError.reserve(MaxElements);
-}*/
 
 
 FeaturesFlow::FeaturesFlow(vector<ImgPoint_t >& Previous, vector<ImgPoint_t >& _next, vector<Feature2D_p>& error, size_t time)
@@ -28,6 +21,7 @@ FeaturesFlow::FeaturesFlow(vector<ImgPoint_t >& Previous, vector<ImgPoint_t >& _
 	MatchError=error;
 
 }
+
  FeaturesFlow::FeaturesFlow(vector<ImgPoint_t >& Previous, vector<ImgPoint_t >& _next, vector<Feature2D_p>& error, size_t time,
 															vector<uchar>& features_found):	timeNext(time)
 {
@@ -43,6 +37,7 @@ FeaturesFlow::FeaturesFlow(vector<ImgPoint_t >& Previous, vector<ImgPoint_t >& _
 	}
 
 }
+
 FeaturesFlow::FeaturesFlow(vector<ImgPoint_t >& Previous, vector<ImgPoint_t >& _next, vector<Feature2D_p>& error, size_t time,
 							vector<uchar>& features_found,Feature2D_p max_match_error):	timeNext(time)
 {
@@ -60,17 +55,82 @@ FeaturesFlow::FeaturesFlow(vector<ImgPoint_t >& Previous, vector<ImgPoint_t >& _
 }
 
 
+bool FeaturesFlow::FilterPts(Feature2D_p max_error){
+				vector<ImgPoint_t >::iterator pp=Prev.begin();
+				vector<ImgPoint_t >::iterator nn=Next.begin();
+				vector<Feature2D_p>::iterator ee=MatchError.begin();
+				size_t vec_size=Prev.size();
+
+				for (size_t i = 0; i < vec_size; ++i){
+					if(*ee>max_error){
+						pp=Prev.erase(pp);
+						nn=Next.erase(nn);
+						ee=MatchError.erase(ee);
+					}else{
+						pp++;
+						nn++;
+						ee++;
+					}
+				}
+
+				if (Prev.size()==0)
+					return false;
+				else
+					return true;
+			}
+
+bool FeaturesFlow::FilterPts(vector<uchar>& status){
+				vector<ImgPoint_t >::iterator pp=Prev.begin();
+				vector<ImgPoint_t >::iterator nn=Next.begin();
+				vector<Feature2D_p>::iterator ee=MatchError.begin();
+				size_t vec_size=Prev.size();
+
+				for (size_t i = 0; i < vec_size; ++i){
+					if(status[i]){
+						pp=Prev.erase(pp);
+						nn=Next.erase(nn);
+						ee=MatchError.erase(ee);
+					}else{
+						pp++;
+						nn++;
+						ee++;
+					}
+				}
+
+				if (Prev.size()==0)
+					return false;
+				else
+					return true;
+			}
+
+bool FeaturesFlow::FilterPts(Feature2D_p max_error,vector<uchar>& status){
+				vector<ImgPoint_t >::iterator pp=Prev.begin();
+				vector<ImgPoint_t >::iterator nn=Next.begin();
+				vector<Feature2D_p>::iterator ee=MatchError.begin();
+				size_t vec_size=Prev.size();
+
+				for (size_t i = 0; i < vec_size; ++i){
+					if(*ee>max_error && status[i]){
+						pp=Prev.erase(pp);
+						nn=Next.erase(nn);
+						ee=MatchError.erase(ee);
+					}else{
+						pp++;
+						nn++;
+						ee++;
+					}
+				}
+
+				if (Prev.size()==0)
+					return false;
+				else
+					return true;
+			}
 
 
 //########################################################################################################
-//################################---------FeaturesFlow3D Methods---------################################
+//################################---------FeaturesFlow3D Methods definition---------#####################
 //########################################################################################################
-
-
-/*FeaturesFlow3D::FeaturesFlow3D(int MaxElements):FeaturesFlow(MaxElements){
-	speed_3D.reserve(MaxElements);
-	next_3D.reserve(MaxElements);
-}*/
 
 
 void  FeaturesFlow3D::GetPrev3D(vector<SpacePoint_t >& prev_3D ){
@@ -79,54 +139,19 @@ void  FeaturesFlow3D::GetPrev3D(vector<SpacePoint_t >& prev_3D ){
 }
 
 
-
 //############################################################################################################
-//################################---------StreetFeaturesFlow Methods---------################################
+//################################---------StreetFeaturesFlow Methods definition---------#####################
 //############################################################################################################
 
-/*StreetFeaturesFlow::StreetFeaturesFlow(int MaxElements):FeaturesFlow3D(MaxElements){
-	reliability.reserve(MaxElements);
-}
-*/
-void StreetFeaturesFlow::CalZparam(edge_t  left_edge,edge_t  right_edge,int rows,int cols){//function with the geometrical info of the street
-
-	//change of coordinates and wall adjust
-	  int a0left=1/(1/left_edge[0] - x_wall/(y_floor*f_camara) ) +frame_rows/2-left_edge[1]*frame_cols/2;  
-	  int a0right=1/(1/right_edge[0] + x_wall/(y_floor*f_camara) ) +frame_rows/2-right_edge[1]*frame_cols/2;
-
-  for (unsigned int i = 0; i < Prev.size(); ++i){
-		//check where is the point and calc velocity
-		int x=Prev[i].x;
-		if (x <cols/2) {  //left side
-
-			if (Prev[i].y<left_edge[1]*x + a0left ){//on the wall
-
-				reliability.push_back(1);
-				next_3D.push_back(SpacePoint_t(0,0,1/(left_edge[0]+(Next[i].x-cols/2)*left_edge[1])));
-				speed_3D.push_back(SpacePoint_t(0,0,1/(left_edge[0]+(x-cols/2)*left_edge[1])-next_3D.back().z ));
-
-			}else{
-				reliability.push_back(10);
-				next_3D.push_back(SpacePoint_t(0,0,1/(Next[i].y-rows/2)));
-				speed_3D.push_back(SpacePoint_t(0,0,1/(Prev[i].y-rows/2)-next_3D.back().z));
-			}
-
-		}else{//right side
-
-			if (Prev[i].y<right_edge[1]*x + a0right ){//on the wall
-				reliability.push_back(1);
-				next_3D.push_back(SpacePoint_t(0,0,1/(right_edge[0]+(Next[i].x-cols/2)*right_edge[1])));
-				speed_3D.push_back(SpacePoint_t(0,0,1/(right_edge[0]+(x-cols/2)*right_edge[1])-next_3D.back().z));
-
-			}else{
-				reliability.push_back(10);
-				next_3D.push_back(SpacePoint_t(0,0,1/(Next[i].y-rows/2)));
-				speed_3D.push_back(SpacePoint_t(0,0,1/(Prev[i].y-rows/2)-next_3D.back().z));
-			}
-		}
-  }
-}
-
+/* the CalZparam method implemented assumes that the street is described by the equation y=y_floor
+ * Also, it assumes that the vanishing Point in the center of each frame and there are two walls, one on each
+ * side of the street at a known distance from the street edges. this walls are described by planes perpendicular
+ * to the street's plane.
+ * this method implements an normalized Z coordinates.
+ * In order to get the proper value we have to multiply the computed value
+ * speed :  by y_floor*f_camara*FPS
+ * point coordinates: by y_floor*f_camara
+ */
 
 void StreetFeaturesFlow::CalZparam(edge_t  left_edge,edge_t  right_edge){//function with the geometrical info of the street
 	// wall adjust
@@ -245,43 +270,3 @@ ifstream& operator>> (ifstream& ifs, StreetFeaturesFlow& nieta)
 
 
 
-
-//por si nos dice que cambiemos y no usemos pint3f sino vector de float solo para z
-/*
-CalZparam(edge_t  leftEdge,edge_t  rightEdge,int rows,int cols){//function with the geometrical info of the street
-
-  int a0left=leftEdge[0] +rows/2-leftEdge[1]*cols/2;
-  int a0right=rightEdge[0] +rows/2-rightEdge[1]*cols/2;
-
-  for (unsigned int i = 0; i < Prev.size(); ++i){
-		//check where is the point and calc velocity
-		int x=Prev[i].x;
-		if (x <cols/2) {  //left side
-			
-			if (Prev[i].y<leftEdge[1]*x + a0left ){//on the wall
-				reliability.push_back(1);
-				Next_z.push_back(1/(leftEdge[0]+(Next[i].x-cols/2)*leftEdge[1]));
-				speed_z.push_back(1/(leftEdge[0]+(x-cols/2)*leftEdge[1])-Next_z.back() );
-
-			}else{
-				reliability.push_back(10);
-				Next_z.push_back(1/(Next[i].y-rows/2));
-				speed_z.push_back(1/(Prev[i].y-rows/2)-Next_z.back());
-			}
-
-		}else{//right side
-
-			if (Prev[i].y<rightEdge[1]*x + a0right ){//on the wall
-				reliability.push_back(1);
-				Next_z.push_back(1/(rightEdge[0]+(Next[i].x-cols/2)*rightEdge[1]));
-				speed_z.push_back(1/(rightEdge[0]+(x-cols/2)*rightEdge[1])-Next_z.back());
-
-			}else{
-				reliability.push_back(10);
-				Next_z.push_back(1/(Next[i].y-rows/2));
-				speed_z.push_back(1/(Prev[i].y-rows/2)-Next_z.back());
-			}
-		}
-  }
-}
-*/
