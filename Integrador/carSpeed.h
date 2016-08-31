@@ -81,7 +81,7 @@ class CarSpeed{
 			//just z
 				Feature3D_p GetStreetSpeed(const Mat& frame);		//method that computes the z coordinate car's relative speed to the street
 
-			//full3d, future development, not jet defined
+			//full3d, future development, not yet defined
 				//SpacePoint_t GetStreetSpeed3D(const Mat& frame);	//method that computes the car's relative speed vector to the street
 
 
